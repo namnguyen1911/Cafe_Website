@@ -1,9 +1,11 @@
 import { NavLink } from 'react-router-dom'
 import React from 'react'
 import {assets} from '../assets/assets'
+import {useAppContext} from '../context/AppContext.jsx'
 
 const Navbar = () => {
     const [open, setOpen] = React.useState(false)
+    const {user, setUser} = useAppContext()
   return (
     <nav className="flex items-center justify-between px-6 md:px-16 lg:px-24 xl:px-32 py-4 border-b border-gray-300 bg-white relative transition-all">
 
@@ -53,7 +55,7 @@ const Navbar = () => {
             </div>
 
 
-            <button onClick={() => open ? setOpen(false) : setOpen(true)} aria-label="Menu" className="sm:hidden">
+            <button onClick={() => setOpen(!open)} aria-label="Menu" className="sm:hidden">
 
                 {/* Menu Icon SVG */}
 
@@ -69,6 +71,8 @@ const Navbar = () => {
                 <NavLink to='/' onClick={() => setOpen(false)}>Home</NavLink>
 
                 <NavLink to='/products' onClick={() => setOpen(false)}>All Products</NavLink>
+
+                { user && <NavLink to='/products' onClick={() => setOpen(false)}>My Orders</NavLink>}
 
                 <NavLink to='/' onClick={() => setOpen(false)}>Contact</NavLink>
 
