@@ -10,8 +10,8 @@ const Navbar = () => {
   return (
     <nav className="flex items-center justify-between px-6 md:px-16 lg:px-24 xl:px-32 py-4 border-b border-gray-300 bg-white relative transition-all">
 
-
-            <NavLink to='/'>
+            {/* Logo */}
+            <NavLink to='/' onClick={() => setOpen(false)} >
 
                 <img className="h-8" src={assets.logo} alt="logo"/>
 
@@ -28,7 +28,7 @@ const Navbar = () => {
 
                 <NavLink to='/'>Contact</NavLink>
 
-
+                {/* Search bar */}
                 <div className="hidden lg:flex items-center text-sm gap-2 border border-gray-300 px-3 rounded-full">
 
                     <input className="py-1.5 w-full bg-transparent outline-none placeholder-gray-500" type="text" placeholder="Search products" />
@@ -37,12 +37,12 @@ const Navbar = () => {
 
                 </div>
 
-
-                <div className="relative cursor-pointer">
+                {/* Cart */}
+                <div onClick={() => navigate("/cart")} className="relative cursor-pointer">
 
                     <img src={assets.nav_cart_icon} alt='cart' className='w-6 opacity-80'/>
 
-                    <button className="absolute -top-2 -right-3 text-xs text-white bg-red-400 hover:bg-red-600 w-[18px] h-[18px] rounded-full">3</button>
+                    <button  className="absolute -top-2 -right-3 text-xs text-white bg-red-400 hover:bg-red-600 w-[18px] h-[18px] rounded-full">3</button>
 
                 </div>
 
@@ -57,7 +57,7 @@ const Navbar = () => {
                         <img src={assets.profile_icon} className='w-10' alt="profile_icon"/>
                         <ul className='hidden group-hover:block absolute top-10 right-0 bg-white shadow border border-gray-230 py-2.5 w-30 rounded-md text-sm z-40'>
                             <li onClick={() => navigate("my-orders")} className='p-1.5 pl-3 hover:bg-primary/10 cursor-pointer'>My Orders</li>
-                            <li oneClick={logout} className='p-1.5 pl-3 hover:bg-primary/10 cursor-pointer'>Logout</li>
+                            <li onClick={logout} className='p-1.5 pl-3 hover:bg-primary/10 cursor-pointer'>Logout</li>
                         </ul>
                     </div>
                 )}
