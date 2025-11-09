@@ -3,12 +3,13 @@ import {useNavigate} from "react-router-dom";
 import { dummyProducts } from '../assets/assets';
 import toast from "react-hot-toast"
 
+
 export const AppContext = createContext();
 
 //Set up a wrapper (environment)
 export const AppContextProvider = ({children}) => {
     //Initialization
-    const currency = import.meta.VITE_CURRENCY;
+    const currency = import.meta.env.VITE_CURRENCY;
     const navigate = useNavigate();
     const [user, setUser] = useState(null)
     const [isSeller, setIsSeller] = useState(false)
@@ -40,7 +41,7 @@ export const AppContextProvider = ({children}) => {
 
     //Update cart item quantity
     const updateCartItem = (itemId, quantity) => {
-        let cartData = structureClone(cartItems);
+        let cartData = structuredClone(cartItems);
         cartData[itemId] = quantity;
         setCartItems(cartData);
         toast.success("Cart Updated");
@@ -55,7 +56,7 @@ export const AppContextProvider = ({children}) => {
                 delete cartData[itemId];
             }
         }
-        toast.success("Remove from Cart");
+        toast.success("Removed from Cart");
         setCartItems(cartData);
     }
 
