@@ -14,7 +14,7 @@ const App = () => {
   return (
     <div>
       {isSellerPath ? null : <Navbar/>}
-      {!showUserLogin ? <Login/> : null}
+      {showUserLogin ? <Login/> : null}
       <Toaster/>
       <div className={`${isSellerPath ? "" : "px-6 md:px-16 lg:px-24 xl:px-32"}`} >
         <Routes>

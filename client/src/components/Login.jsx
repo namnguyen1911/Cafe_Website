@@ -1,7 +1,9 @@
 import React from 'react'
+import { useAppContext } from '../context/AppContext'
 
 const Login = () => {
     const [state, setState] = React.useState("login")
+    const {setShowUserLogin} = useAppContext()
 
     const [formData, setFormData] = React.useState({
         name: '',
@@ -22,8 +24,8 @@ const Login = () => {
     }
 
   return (
-    <div className='fixed top-0 bottom-0 left-0 right-0 z-30 flex items-center justify-center text-sm text-gray-600 bg-black/50'>
-        <form onSubmit={handleSubmit} className="w-full max-w-sm text-center border border-gray-300/60 rounded-2xl px-8 bg-white">
+    <div onClick={ () => setShowUserLogin(false)}className='fixed top-0 bottom-0 left-0 right-0 z-30 flex items-center justify-center text-sm text-gray-600 bg-black/50'>
+        <form onClick={(e) => e.stopPropagation()} onSubmit={handleSubmit} className="w-full max-w-sm text-center border border-gray-300/60 rounded-2xl px-8 bg-white">
 
                 <h1 className="text-gray-900 text-3xl mt-10 font-medium">{state === "login" ? "Login" : "Sign up"}</h1>
 
