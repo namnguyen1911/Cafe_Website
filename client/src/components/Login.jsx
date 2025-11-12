@@ -3,7 +3,16 @@ import { useAppContext } from '../context/AppContext'
 
 const Login = () => {
     const [state, setState] = React.useState("login")
-    const {setShowUserLogin} = useAppContext()
+    const {setShowUserLogin, setUser} = useAppContext()
+    
+    const onSubmitHandler = async (event) => {
+        event.preventDefault();
+        setUser ({
+            email: "test@gmail.com",
+            name: "Nam"
+        })
+        setShowUserLogin(false)
+    }
 
     const [formData, setFormData] = React.useState({
         name: '',
@@ -13,10 +22,6 @@ const Login = () => {
     })
 
 
-    const handleSubmit = async (e) => {
-        e.preventDefault()
-    }
-
 
     const handleChange = (e) => {
         const { name, value } = e.target
@@ -25,7 +30,7 @@ const Login = () => {
 
   return (
     <div onClick={ () => setShowUserLogin(false)}className='fixed top-0 bottom-0 left-0 right-0 z-30 flex items-center justify-center text-sm text-gray-600 bg-black/50'>
-        <form onClick={(e) => e.stopPropagation()} onSubmit={handleSubmit} className="w-full max-w-sm text-center border border-gray-300/60 rounded-2xl px-8 bg-white">
+        <form onSubmit={onSubmitHandler} onClick={(e) => e.stopPropagation()} className="w-full max-w-sm text-center border border-gray-300/60 rounded-2xl px-8 bg-white">
 
                 <h1 className="text-gray-900 text-3xl mt-10 font-medium">{state === "login" ? "Login" : "Sign up"}</h1>
 
@@ -65,7 +70,7 @@ const Login = () => {
 
                 </div>
 
-                <button type="submit" className="mt-2 w-full h-11 rounded-full text-white bg-indigo-500 hover:opacity-90 transition-opacity">
+                <button type="submit" className="mt-2 w-full h-11 rounded-full text-white bg-primary hover:opacity-90 transition-opacity">
 
                     {state === "login" ? "Login" : "Sign up"}
 
