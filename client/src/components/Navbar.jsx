@@ -5,7 +5,7 @@ import {useAppContext} from '../context/AppContext.jsx'
 
 const Navbar = () => {
     const [open, setOpen] = React.useState(false)
-    const {user, setUser, setShowUserLogin, navigate, setSearchQuery, searchQuery} = useAppContext()
+    const {user, setUser, setShowUserLogin, navigate, setSearchQuery, searchQuery, getCartCount} = useAppContext()
     const logout = async () => {setUser(null);navigate('/')}
     useEffect(() => {
         if(searchQuery.length > 0) {
