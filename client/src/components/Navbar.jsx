@@ -47,7 +47,7 @@ const Navbar = () => {
 
                     <img src={assets.nav_cart_icon} alt='cart' className='w-6 opacity-80'/>
 
-                    <button  className="absolute -top-2 -right-3 text-xs text-white bg-red-400 hover:bg-red-600 w-[18px] h-[18px] rounded-full">3</button>
+                    <button  className="absolute -top-2 -right-3 text-xs text-white bg-red-400 hover:bg-red-600 w-[18px] h-[18px] rounded-full">{getCartCount()}</button>
 
                 </div>
 
@@ -69,14 +69,27 @@ const Navbar = () => {
 
             </div>
 
+            <div className="flex items-center gap-6 sm:hidden">
+                {/* Cart */}
+                <div onClick={() => navigate("/cart")} className="relative cursor-pointer">
 
-            <button onClick={() => setOpen(!open)} aria-label="Menu" className="sm:hidden">
+                    <img src={assets.nav_cart_icon} alt='cart' className='w-6 opacity-80'/>
 
-                {/* Menu Icon SVG */}
+                    <button  className="absolute -top-2 -right-3 text-xs text-white bg-red-400 hover:bg-red-600 w-[18px] h-[18px] rounded-full">{getCartCount()}</button>
 
-                <img src={assets.menu_icon} alt='menu'/>
+                </div>
 
-            </button>
+                <button onClick={() => setOpen(!open)} aria-label="Menu" >
+
+                    {/* Menu Icon SVG */}
+
+                    <img src={assets.menu_icon} alt='menu'/>
+
+                </button>
+            </div>
+
+
+            
 
 
             {/* Mobile Menu */}
