@@ -1,0 +1,25 @@
+# Node
+client/node_modules/
+server/node_modules/
+npm-debug.log*
+yarn.lock
+pnpm-lock.yaml
+
+# Builds
+client/dist/
+client/build/
+server/dist/
+server/build/
+
+# Env files
+*.env
+.env.local
+.env.development
+.env.production
+.env.test
+
+# OS/editor stuff
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
