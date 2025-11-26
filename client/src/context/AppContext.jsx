@@ -36,15 +36,39 @@ export const AppContextProvider = ({children}) => {
         }
     }
 
+    //Fetch User Auth status, user data and cart items
+    const fetchUser = async () => {
+        try {
+            const {data} = await axios.get('api/user/is-auth');
+            if(data.success) {
+                setUser(data.user)
+                setCartItems(data.user.cartItems)
+            }
+        } catch (error) {
+            setUser(null)
+        }
+    }
+
 
     //Fetch All Products at first load only
     useEffect(() => {
         fetchSeller()
         fetchProducts()
+        fetchUser()
     },[]) //Empty array means first load on DOM only, not every render
 
     const fetchProducts = async () => {
-        setProducts(dummyProducts)
+        try {
+            const {data} = await axios.get('/api/product/list')
+            if(data.success) {
+                setProducts(data.products)
+            }
+            else {
+                toast.error(data.message)
+            }
+        } catch (error) {
+            toast.error(error.message)
+        }
     }
 
     //Add Product to Cart
@@ -104,7 +128,7 @@ export const AppContextProvider = ({children}) => {
     //object variable named "value"
     const value = {navigate, user, setUser, setIsSeller, isSeller, showUserLogin, setShowUserLogin, 
         products, currency, addToCart, updateCartItem, removeFromCart, cartItems, searchQuery, setSearchQuery,
-        getCartAmount, getCartCount, axios}
+        getCartAmount, getCartCount, axios, fetchProducts}
     
     return <AppContext.Provider value={value}>
         {children}

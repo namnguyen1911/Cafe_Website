@@ -126,10 +126,10 @@ const Cart = () => {
                         <span>Shipping Fee</span><span className="text-green-600">Free</span>
                     </p>
                     <p className="flex justify-between">
-                        <span>Tax (2%)</span><span>{currency}{getCartAmount() * 2 / 100}</span>
+                        <span>Tax (10%)</span><span>{currency}{Math.floor(getCartAmount() * 10) / 100}</span>
                     </p>
                     <p className="flex justify-between text-lg font-medium mt-3">
-                        <span>Total Amount:</span><span>{currency}{getCartAmount() + getCartAmount()* 2 / 100}</span>
+                        <span>Total Amount:</span><span>{currency}{getCartAmount() + Math.floor(getCartAmount()* 2) / 100}</span>
                     </p>
                 </div>
 
