@@ -39,7 +39,7 @@ export const AppContextProvider = ({children}) => {
     //Fetch User Auth status, user data and cart items
     const fetchUser = async () => {
         try {
-            const {data} = await axios.get('api/user/is-auth');
+            const {data} = await axios.get('/api/user/is-auth');
             if(data.success) {
                 setUser(data.user)
                 setCartItems(data.user.cartItems)
@@ -57,6 +57,25 @@ export const AppContextProvider = ({children}) => {
         fetchUser()
     },[]) //Empty array means first load on DOM only, not every render
 
+    useEffect(() => {
+        const updateCart = async () => {
+            try {
+                const {data} = await axios.post('/api/cart/update', {cartItems})
+                if (!data.success) {
+                    toast.error(data.message)
+                }
+            } catch (error) {
+                toast.error(error.message)
+            }
+        }
+
+        if(user) {
+            updateCart()
+        }
+    },[cartItems])
+    
+    
+    
     const fetchProducts = async () => {
         try {
             const {data} = await axios.get('/api/product/list')
