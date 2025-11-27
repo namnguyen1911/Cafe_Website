@@ -5,7 +5,9 @@ import Product from "../models/Product.js";
 //Place Order COD : /api/order/cod
 export const placeOrderCOD = async(req, res) => {
     try {
-        const {userId, items, address} = req.body;
+        const {items, address} = req.body;
+        const userId = req.userId
+        
         if(!address || items.length === 0) {
             return res.json({sucess: false, message: "Invalid data"})
         }
@@ -23,6 +25,7 @@ export const placeOrderCOD = async(req, res) => {
             items,
             amount,
             address,
+            status: "Order placed",
             paymentType: "COD",
         });
         return res.json({success: true, message: "Order Placed Successfully"})
