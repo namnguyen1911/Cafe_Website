@@ -179,7 +179,7 @@ export const stripeWebhooks = async (req,res) => {
             break;
     }
 
-    req.json({received: true})
+    res.json({received: true})
 }
 
 //Ger orders by userId: /api/order/user
