@@ -1,6 +1,7 @@
 import Order from "../models/Order.js";
 import Product from "../models/Product.js";
 import stripe from "stripe"
+import User from "../models/User.js"
 
 
 //Place Order COD : /api/order/cod
@@ -73,9 +74,11 @@ export const placeOrderStripe = async(req, res) => {
         });
 
         //Stripe Gateway Initialize
+        //Basically, without secret key, we cannot create stripe object inside backend
         const stripeInstance = new stripe(process.env.STRIPE_SECRET_KEY);
 
         //Create line items for stripe
+        //This structure can not be customized
         const line_items = productData.map((item) => {
             return {
                 price_data: {
@@ -106,6 +109,77 @@ export const placeOrderStripe = async(req, res) => {
     } catch (error) {
         return res.json({sucess: false, message: error.message})
     }
+}
+
+//Stripe webhooks to verify payment action: /stripe
+export const stripeWebhooks = async (req,res) => {
+    //Stripe Gateway Initialize
+    //Basically, without secret key, we cannot create stripe object inside backend
+    const stripeInstance = new stripe(process.env.STRIPE_SECRET_KEY);
+
+    const sig = req.headers["stripe-signature"];
+
+    let event;
+
+    try {
+        event = stripeInstance.webhooks.constructEvent(
+            req.body,
+            sig,
+            process.env.STRIPE_WEBHOOK_SECRET
+        )
+    } catch (error) {
+        return res.status(400).send(`Webhook Error: ${error.message}`)
+    }
+
+    //Handle the event
+    //event is a Stripe Event Object which contains many keys
+    //event.type is one of those keys
+    switch (event.type) {
+        case "payment_intent.succeeded": {
+            //event.data is one of those keys
+            const paymentIntent = event.data.object;
+            const paymentIntentId = paymentIntent.id;
+
+            //Getting session metadata
+            const session = await stripeInstance.checkout.sessions.list({
+                payment_intent: paymentIntentId
+            });
+
+            //session is like a normal object
+            //It contain data key
+            //Data key is an array of object
+            //That object is called metadata
+            //Metadata contains many keys which are defined in checkout session above
+            //orderId, and userId are they key inside metadata
+            const {orderId, userId} = session.data[0].metadata;
+            
+            //Mark payment as Paid
+            await Order.findByIdAndUpdate(orderId, {isPaid: true})
+
+            //Clear user cart
+            await User.findByIdAndUpdate(userId, {cartItems: {}});
+            break;
+        }
+        case "payment_intent.failed": {
+            const paymentIntent = event.data.object;
+            const paymentIntentId = paymentIntent.id;
+
+            //Getting session metadata
+            const session = await stripeInstance.checkout.sessions.list({
+                payment_intent: paymentIntentId
+            });
+
+            const {orderId} = session.data[0].metadata;
+            await Order.findByIdAndDelete(orderId);
+            break;
+        }
+    
+        default:
+            console.error(`Unhandled event type ${event.type}`)
+            break;
+    }
+
+    req.json({received: true})
 }
 
 //Ger orders by userId: /api/order/user
