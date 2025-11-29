@@ -15,18 +15,26 @@ const ProductDetails = () => {
     const product = products.find((item) => item._id === id);
 
     useEffect(() => {
-        if(products.length > 0) {
-            let productsCopy = products.slice();
-            productsCopy = productsCopy.filter((item) => product.category === item.category)
-            setRelatedProducts(productsCopy.slice(0,5))
-        }
-    }, [products])
+        if (!product) return;
+        const related = products
+            .filter((item) => item._id !== product._id && item.category === product.category)
+            .slice(0, 5);
+        setRelatedProducts(related);
+    }, [products, product])
 
     useEffect(() => {
-        setThumbnail(product?.image[0] ? product.image[0] : null)
+        setThumbnail(product?.image?.[0] ?? null)
     },[product])
 
-    return product && (
+    if (!product) {
+        return (
+            <div className="mt-12">
+                <p className="text-gray-500">Product not found.</p>
+            </div>
+        );
+    }
+
+    return (
         <div className="mt-12">
             <p>
                 <Link to={"/"}>Home</Link> /
