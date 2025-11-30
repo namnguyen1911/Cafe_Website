@@ -4,7 +4,7 @@ import toast from 'react-hot-toast'
 
 const Login = () => {
     const [state, setState] = useState("login")
-    const {setShowUserLogin, setUser, axios, navigate} = useAppContext()
+    const {setShowUserLogin, setUser, setCartItems, axios, navigate} = useAppContext()
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -19,6 +19,7 @@ const Login = () => {
 
             if(data.success) {
                 setUser(data.user)
+                setCartItems(data.user.cartItems || {})
                 setShowUserLogin(false)
                 navigate('/')
             }
