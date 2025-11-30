@@ -12,13 +12,13 @@ const Cart = () => {
     const [paymentOption, setPaymentOption] = useState("COD")
 
     const getCart = () => {
-        let tempArray = []
-        for(const key in cartItems) {
-            const product = products.find((item) => item._id === key)
-            product.quantity = cartItems[key]
-            tempArray.push(product)
+        const tempArray = [];
+        for (const key in cartItems) {
+            const product = products.find((item) => item._id === key);
+            if (!product) continue; // skip missing/stale products
+            tempArray.push({...product, quantity: cartItems[key]});
         }
-        setCartArray(tempArray)
+        setCartArray(tempArray);
     }
 
     const getUserAddress = async () => {
@@ -40,45 +40,34 @@ const Cart = () => {
 
     const placeOrder = async() => {
         try {
+            if (!user) return toast.error("Please log in to place an order");
+            if (!cartArray.length) return toast.error("Your cart is empty");
             if(!selectedAddress) {
                 return toast.error("Please select an address")
             }
 
-            //Place order with COD
-            if(paymentOption === "COD") {
-                const {data} = await axios.post('/api/order/cod', {
-                    items: cartArray.map(item => ({
-                        product: item._id,
-                        quantity: item.quantity
-                    })),
-                    address: selectedAddress._id
-                })
+            const payload = {
+                items: cartArray.map(item => ({
+                    product: item._id,
+                    quantity: item.quantity
+                })),
+                address: selectedAddress._id
+            };
 
-                if(data.success) {
+            const endpoint = paymentOption === "COD" ? '/api/order/cod' : '/api/order/stripe';
+            const {data} = await axios.post(endpoint, payload);
+
+            if(data.success) {
+                if (paymentOption === "COD") {
                     toast.success(data.message);
-                    setCartItems({})
-                    navigate('/my-orders')
-                }
-                else {
-                    toast.error(data.message)
+                    setCartItems({});
+                    navigate('/my-orders');
+                } else {
+                    window.location.replace(data.url);
                 }
             }
-            //Place Order with Stripe
             else {
-                const {data} = await axios.post('/api/order/stripe', {
-                    items: cartArray.map(item => ({
-                        product: item._id,
-                        quantity: item.quantity
-                    })),
-                    address: selectedAddress._id
-                })
-
-                if(data.success) {
-                    window.location.replace(data.url)
-                }
-                else {
-                    toast.error(data.message)
-                }
+                toast.error(data.message)
             }
         } catch (error) {
             toast.error(error.message)
@@ -96,6 +85,11 @@ const Cart = () => {
             getUserAddress()
         }
     },[user])
+
+    const price = cartArray.reduce((sum, item) => sum + item.offerPrice * item.quantity, 0);
+    const tax = Math.floor(price * 0.1);
+    const total = price + tax;
+    const formatCurrency = (value) => value.toFixed(2);
 
     return products.length > 0 && cartItems ? (
         <div className="flex flex-col md:flex-row mt-16">
@@ -135,7 +129,7 @@ const Cart = () => {
                                 </div>
                             </div>
                         </div>
-                        <p className="text-center">{currency}{product.offerPrice * product.quantity}</p>
+                        <p className="text-center">{currency}{formatCurrency(product.offerPrice * product.quantity)}</p>
                         <button onClick={() => removeFromCart(product._id)} className="cursor-pointer mx-auto">
                             <img src={assets.remove_icon} alt="remove" className="inline-block w-6 h-6"/>
                         </button>
@@ -163,8 +157,11 @@ const Cart = () => {
                         </button>
                         {showAddress && (
                             <div className="absolute top-12 py-1 bg-white border border-gray-300 text-sm w-full">
-                                {addresses.map((address, index) => (
-                                    <p onClick={() => {setSelectedAddress(address);setShowAddress(false)}} className="text-gray-500 p-2 hover:bg-gray-100">
+                                {addresses.length === 0 && (
+                                    <p className="p-2 text-gray-500">No addresses found</p>
+                                )}
+                                {addresses.map((address) => (
+                                    <p key={address._id} onClick={() => {setSelectedAddress(address);setShowAddress(false)}} className="text-gray-500 p-2 hover:bg-gray-100">
                                         {address.street}, {address.city}, {address.state}, {address.country}
                                     </p>
                                 ))} 
@@ -187,16 +184,16 @@ const Cart = () => {
 
                 <div className="text-gray-500 mt-4 space-y-2">
                     <p className="flex justify-between">
-                        <span>Price</span><span>{currency}{getCartAmount()}</span>
+                        <span>Price</span><span>{currency}{formatCurrency(price)}</span>
                     </p>
                     <p className="flex justify-between">
                         <span>Shipping Fee</span><span className="text-green-600">Free</span>
                     </p>
                     <p className="flex justify-between">
-                        <span>Tax (10%)</span><span>{currency}{Math.floor(getCartAmount() * 10) / 100}</span>
+                        <span>Tax (10%)</span><span>{currency}{formatCurrency(tax)}</span>
                     </p>
                     <p className="flex justify-between text-lg font-medium mt-3">
-                        <span>Total Amount:</span><span>{currency}{getCartAmount() + Math.floor(getCartAmount()* 2) / 100}</span>
+                        <span>Total Amount:</span><span>{currency}{formatCurrency(total)}</span>
                     </p>
                 </div>
 
