@@ -41,8 +41,16 @@ export const placeOrderStripe = async(req, res) => {
     try {
         const {items, address} = req.body;
         const userId = req.userId
-        const {origin} = req.headers;
 
+        //Select a trusted origin instead of whatever the client sends
+        const allowedOrigins = [
+            process.env.CLIENT_URL,
+            process.env.CLIENT_URL_ALT,
+        ].filter(Boolean);
+        const origin = allowedOrigins.includes(req.headers.origin) ? req.headers.origin : allowedOrigins[0];
+        if(!origin) {
+            return res.json({success: false, message: "No allowed client origin configured"})
+        }
         
         if(!address || items.length === 0) {
             return res.json({sucess: false, message: "Invalid data"})
