@@ -17,7 +17,7 @@ export const register = async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password,10)
 
-        const user = await User.create({name, email, password: hashedPassword})
+        const user = await User.create({name, email, password: hashedPassword, cartItems: req.body.cartItems || {}})
 
         const token = jwt.sign({id: user._id}, process.env.JWT_SECRET,{expiresIn: '7d'});
 
@@ -54,6 +54,16 @@ export const login = async (req, res) => {
 
         if(!isMatch)
             return res.json({success:false, message: "Invalid email or password"});
+
+        // Merge guest cart with user's cart (guest cart overwrites matching items)
+        const guestCart = req.body.cartItems || {};
+        const mergedCart = { ...(user.cartItems || {}) };
+        for (const [productId, qty] of Object.entries(guestCart)) {
+            if (!qty || qty < 1) continue;
+            mergedCart[productId] = qty;
+        }
+        user.cartItems = mergedCart;
+        await user.save();
 
         const token = jwt.sign({id: user._id}, process.env.JWT_SECRET,{expiresIn: '7d'});
 

@@ -4,7 +4,7 @@ import toast from 'react-hot-toast'
 
 const Login = () => {
     const [state, setState] = useState("login")
-    const {setShowUserLogin, setUser, setCartItems, axios, navigate} = useAppContext()
+    const {setShowUserLogin, setUser, setCartItems, cartItems, axios, navigate} = useAppContext()
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -15,7 +15,7 @@ const Login = () => {
         try {
             event.preventDefault();
 
-            const {data} = await axios.post(`/api/user/${state}`,formData)
+            const {data} = await axios.post(`/api/user/${state}`, {...formData, cartItems})
 
             if(data.success) {
                 setUser(data.user)
