@@ -182,7 +182,7 @@ export const stripeWebhooks = async (req,res) => {
     return res.json({received: true})
 }
 
-//Ger orders by userId: /api/order/user
+//Get orders by userId: /api/order/user
 export const getUserOrders = async (req, res) => {
     try {
         const userId = req.userId;

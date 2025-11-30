@@ -35,11 +35,21 @@ export const productList = async (req, res) => {
     }
 }
 
-//Get single Product: /api/product/id
+//Get single Product: /api/product/:id
 export const productById = async (req, res) => {
     try {
-        const {id} = req.body
+        const {id} = req.params
+
+        if(!id) {
+            return res.json({success: false, message: "Product id is required"})
+        }
+
         const product = await Product.findById(id)
+
+        if(!product) {
+            return res.json({success: false, message: "Product not found"})
+        }
+
         res.json({success: true, product})
     } catch (error) {
         console.log(error.message);
