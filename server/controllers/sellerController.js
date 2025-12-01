@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 
 //Login seller: /api/seller/login
 export const sellerLogin = async (req, res) => {
@@ -7,12 +8,19 @@ export const sellerLogin = async (req, res) => {
 
         if(password === process.env.SELLER_PASSWORD && email === process.env.SELLER_EMAIL) {
             const token = jwt.sign({email},process.env.JWT_SECRET, {expiresIn: '7d'});
+            const csrfToken = crypto.randomUUID();
             
             res.cookie('sellerToken',token, {
                 httpOnly: true, //Prevent JavaScript to access cookie
                 secure: process.env.NODE_ENV === 'production', //Use secure cookies in production
-                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict', //CSRF protection
+                sameSite: process.env.NODE_ENV === 'production' ? 'lax' : 'lax', //CSRF protection
                 maxAge: 7 * 24 * 60 * 60 * 1000, //Cookie expiration time
+            });
+            res.cookie('csrfToken', csrfToken, {
+                httpOnly: false,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: process.env.NODE_ENV === 'production' ? 'lax' : 'lax',
+                maxAge: 7 * 24 * 60 * 60 * 1000,
             });
 
             return res.json({success: true, message: "Logged In"})
@@ -43,7 +51,7 @@ export const sellerLogout = async (req,res) => {
         res.clearCookie('sellerToken', {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+            sameSite: process.env.NODE_ENV === 'production' ? 'lax' : 'lax',
         });
 
         return res.json({success: true, message: "Logged Out"})

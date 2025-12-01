@@ -5,6 +5,9 @@ import { dummyOrders } from '../assets/assets'
 const MyOrder = () => {
     const [myOrders, setMyOrders] = useState([])
     const {currency, axios, user} = useAppContext()
+
+    const formatCurrency = (value) => value.toFixed(2);
+
     const fetchMyOrders = async () => {
         try {
             const {data} = await axios.get('/api/order/user')
@@ -31,7 +34,7 @@ const MyOrder = () => {
                 <p className='flex justify-between md:items-center text-gray-400 md:font-medium max-md:flex-col'>
                     <span>OrderId: {order._id}</span>
                     <span>Payment: {order.paymentType}</span>
-                    <span>Total Amount: {currency}{order.amount}</span>
+                    <span>Total Amount: {currency}{formatCurrency(order.amount)}</span>
                 </p>
                 {order.items.filter((item) => item.product).map((item, index) => (
                     <div key={index}
@@ -52,7 +55,7 @@ const MyOrder = () => {
                             <p>Date: {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : "—"}</p>
                         </div>
                         <p className='text-primary text-lg font-medium'>
-                            Amount: {currency}{item.product.offerPrice * item.quantity}
+                            Amount: {currency}{formatCurrency(item.product.offerPrice * item.quantity)}
                         </p>
                     </div>
                 ))}

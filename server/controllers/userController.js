@@ -1,6 +1,7 @@
 import User from "../models/User.js";
 import bcrypt from "bcryptjs";
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 
 //Register User: /api/user/register
 export const register = async (req, res) => {
@@ -20,12 +21,19 @@ export const register = async (req, res) => {
         const user = await User.create({name, email, password: hashedPassword, cartItems: req.body.cartItems || {}})
 
         const token = jwt.sign({id: user._id}, process.env.JWT_SECRET,{expiresIn: '7d'});
+        const csrfToken = crypto.randomUUID();
 
         res.cookie('token',token, {
             httpOnly: true, //Prevent JavaScript to access cookie
             secure: process.env.NODE_ENV === 'production', //Use secure cookies in production
-            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict', //CSRF protection
+            sameSite: process.env.NODE_ENV === 'production' ? 'lax' : 'lax', //CSRF protection
             maxAge: 7 * 24 * 60 * 60 * 1000, //Cookie expiration time
+        })
+        res.cookie('csrfToken', csrfToken, {
+            httpOnly: false,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'lax' : 'lax',
+            maxAge: 7 * 24 * 60 * 60 * 1000,
         })
 
         return res.json({success: true, user: {email: user.email, name: user.name, cartItems: user.cartItems || {}}})
@@ -66,12 +74,19 @@ export const login = async (req, res) => {
         await user.save();
 
         const token = jwt.sign({id: user._id}, process.env.JWT_SECRET,{expiresIn: '7d'});
+        const csrfToken = crypto.randomUUID();
 
         res.cookie('token',token, {
             httpOnly: true, //Prevent JavaScript to access cookie
             secure: process.env.NODE_ENV === 'production', //Use secure cookies in production
-            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict', //CSRF protection
+            sameSite: process.env.NODE_ENV === 'production' ? 'lax' : 'lax', //CSRF protection
             maxAge: 7 * 24 * 60 * 60 * 1000, //Cookie expiration time
+        })
+        res.cookie('csrfToken', csrfToken, {
+            httpOnly: false,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'lax' : 'lax',
+            maxAge: 7 * 24 * 60 * 60 * 1000,
         })
 
         return res.json({success: true, user: {email: user.email, name: user.name, cartItems: user.cartItems || {}}})
@@ -85,6 +100,10 @@ export const login = async (req, res) => {
 export const isAuth = async (req, res) => {
     try{
         const userId = req.userId;
+        //If auth cookie is present but CSRF token is missing, treat as unauthenticated
+        if (!req.cookies?.csrfToken) {
+            return res.json({success: false, message: "Not Authorized"});
+        }
         const user = await User.findById(userId).select("-password")
         return res.json({success: true, user})
     } catch (error) {
@@ -100,7 +119,12 @@ export const logout = async (req,res) => {
         res.clearCookie('token', {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+            sameSite: process.env.NODE_ENV === 'production' ? 'lax' : 'lax',
+        });
+        res.clearCookie('csrfToken', {
+            httpOnly: false,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'lax' : 'lax',
         });
 
         return res.json({success: true, message: "Logged Out"})

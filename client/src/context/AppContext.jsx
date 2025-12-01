@@ -8,6 +8,21 @@ import axios from 'axios';
 axios.defaults.withCredentials = true;
 axios.defaults.baseURL = import.meta.env.VITE_BACKEND_URL;
 
+//Attach CSRF header from cookie (double-submit token)
+const getCsrfToken = () => {
+    if (typeof document === 'undefined') return null;
+    const match = document.cookie.split('; ').find((row) => row.startsWith('csrfToken='));
+    return match ? decodeURIComponent(match.split('=')[1]) : null;
+};
+
+axios.interceptors.request.use((config) => {
+    const csrfToken = getCsrfToken();
+    if (csrfToken) {
+        config.headers['x-csrf-token'] = csrfToken;
+    }
+    return config;
+});
+
 export const AppContext = createContext();
 
 //Set up a wrapper (environment)
