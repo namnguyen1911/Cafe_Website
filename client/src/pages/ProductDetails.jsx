@@ -47,13 +47,13 @@ const ProductDetails = () => {
                 <div className="flex gap-3">
                     <div className="flex flex-col gap-3">
                         {product.image.map((image, index) => (
-                            <div key={index} onClick={() => setThumbnail(image)} className="border max-w-24 border-gray-500/30 rounded overflow-hidden cursor-pointer" >
-                                <img src={image} alt={`Thumbnail ${index + 1}`} />
+                            <div key={index} onClick={() => setThumbnail(image)} className="w-20 aspect-square border border-gray-500/30 rounded overflow-hidden cursor-pointer" >
+                                <img src={image} alt={`Thumbnail ${index + 1}`} className="w-full h-full object-cover" />
                             </div>
                         ))}
                     </div>
 
-                    <div className="border border-gray-500/30 max-w-100 rounded overflow-hidden">
+                    <div className="border border-gray-500/30 max-w-100 w-full aspect-square rounded overflow-hidden">
                         <img src={thumbnail} alt="Selected product" className="w-full h-full object-cover" />
                     </div>
                 </div>
