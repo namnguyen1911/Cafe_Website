@@ -1,4 +1,4 @@
-import logo from "./logo.svg";
+import logo from "./logo.png";
 import search_icon from "./search_icon.svg";
 import remove_icon from "./remove_icon.svg";
 import arrow_right_icon_colored from "./arrow_right_icon_colored.svg";
@@ -20,18 +20,18 @@ import box_icon from "./box_icon.svg";
 import trust_icon from "./trust_icon.svg";
 import black_arrow_icon from "./black_arrow_icon.svg";
 import white_arrow_icon from "./white_arrow_icon.svg";
-import main_banner_bg from "./main_banner_bg.png";
+import main_banner_bg from "./main_banner_bg.jpg";
 import main_banner_bg_sm from "./main_banner_bg_sm.png";
-import bottom_banner_image from "./bottom_banner_image.png";
+import bottom_banner_image from "./bottom_banner_image.jpg";
 import bottom_banner_image_sm from "./bottom_banner_image_sm.png";
 import add_address_image from "./add_address_image.svg";
-import organic_vegitable_image from "./organic_vegitable_image.png";
-import fresh_fruits_image from "./fresh_fruits_image.png";
+import coffee_bean_image from "./coffee_bean_image.png";
+import dry_tea_image from "./dry_tea_image.png";
 import bottles_image from "./bottles_image.png";
-import maggi_image from "./maggi_image.png";
-import dairy_product_image from "./dairy_product_image.png";
-import bakery_image from "./bakery_image.png";
-import grain_image from "./grain_image.png";
+import drinks_image from "./drinks_image.png";
+import dairy_sweetener_image from "./dairy_sweetener_image.png";
+import accessories_image from "./accessories_image.png";
+import alcohol_image from "./alcohol_image.png";
 import potato_image_1 from "./potato_image_1.png";
 import potato_image_2 from "./potato_image_2.png";
 import potato_image_3 from "./potato_image_3.png";
@@ -102,45 +102,45 @@ export const assets = {
 
 export const categories = [
   {
-    text: "Organic veggies",
-    path: "Vegetables",
-    image: organic_vegitable_image,
+    text: "Organic Coffee",
+    path: "Coffee",
+    image: coffee_bean_image,
     bgColor: "#FEF6DA",
   },
   {
-    text: "Fresh Fruits",
-    path: "Fruits",
-    image: fresh_fruits_image,
+    text: "Dry Tea",
+    path: "Tea",
+    image: dry_tea_image,
     bgColor: "#FEE0E0",
   },
   {
-    text: "Cold Drinks",
-    path: "Drinks",
+    text: "Soda",
+    path: "Softdrink",
     image: bottles_image,
     bgColor: "#F0F5DE",
   },
   {
-    text: "Instant Food",
-    path: "Instant",
-    image: maggi_image,
+    text: "Take away Drinks",
+    path: "Takeawaydrinks",
+    image: drinks_image,
     bgColor: "#E1F5EC",
   },
   {
-    text: "Dairy Products",
-    path: "Dairy",
-    image: dairy_product_image,
+    text: "Dairy & Sweetener",
+    path: "Dairyandsweetener",
+    image: dairy_sweetener_image,
     bgColor: "#FEE6CD",
   },
   {
-    text: "Bakery & Breads",
-    path: "Bakery",
-    image: bakery_image,
+    text: "Accessories",
+    path: "Accessories",
+    image: accessories_image,
     bgColor: "#E0F6FE",
   },
   {
-    text: "Grains & Cereals",
-    path: "Grains",
-    image: grain_image,
+    text: "Wines & Beers",
+    path: "Alcohol",
+    image: alcohol_image,
     bgColor: "#F1E3F9",
   },
 ];
@@ -706,7 +706,7 @@ export const dummyProducts = [
 
     price: 55,
     offerPrice: 50,
-    image: [maggi_image],
+    image: [drinks_image],
     description: [
       "Instant and easy to cook",
       "Delicious taste",

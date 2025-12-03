@@ -35,7 +35,7 @@ const Navbar = () => {
             {/* Logo */}
             <NavLink to='/' onClick={() => setOpen(false)} >
 
-                <img className="h-8" src={assets.logo} alt="logo"/>
+                <img className="h-20" src={assets.logo} alt="logo"/>
 
             </NavLink>
 
