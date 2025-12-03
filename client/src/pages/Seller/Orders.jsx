@@ -30,9 +30,16 @@ const Orders = () => {
 
           <h2 className="text-lg font-medium">Orders List</h2>
 
-          {orders.map((order, index) => (
+          {orders.length === 0 && (
+            <p className="text-gray-500">No orders found.</p>
+          )}
 
-              <div key={index} className="flex flex-col md:items-center md:flex-row gap-5 justify-between p-5 max-w-4xl rounded-md border border-gray-300">
+          {orders.map((order, index) => {
+            const address = order.address || {};
+            const items = Array.isArray(order.items) ? order.items.filter((item) => item?.product) : [];
+
+            return (
+              <div key={order._id || index} className="flex flex-col md:items-center md:flex-row gap-5 justify-between p-5 max-w-4xl rounded-md border border-gray-300">
 
                   <div className="flex gap-5 max-w-80">
 
@@ -40,13 +47,13 @@ const Orders = () => {
 
                       <div>
 
-                          {order.items.map((item, index) => (
+                          {items.map((item, index) => (
 
                               <div key={index} className="flex flex-col">
 
                                   <p className="font-medium">
 
-                                      {item.product.name}{" "} <span className='text-primary'> x {item.quantity}</span>
+                                      {item.product?.name}{" "} <span className='text-primary'> x {item.quantity}</span>
 
                                   </p>
 
@@ -61,32 +68,31 @@ const Orders = () => {
 
                   <div className="text-sm md:text-base text-black/60">
 
-                      <p className='text-black/80'>{order.address.firstName} {order.address.lastName}</p>
+                      <p className='text-black/80'>{address.firstName} {address.lastName}</p>
 
-                      <p>{order.address.street}, {order.address.city}</p> 
-                      <p>{order.address.state}, {order.address.zipcode}, {order.address.country}</p>
-                      <p></p>
-                      <p>{order.address.phone}</p>
+                      <p>{address.street}{address.city ? `, ${address.city}` : ""}</p> 
+                      <p>{address.state}{address.zipcode ? `, ${address.zipcode}` : ""}{address.country ? `, ${address.country}` : ""}</p>
+                      <p>{address.phone}</p>
 
                   </div>
 
 
-                  <p className="font-medium text-lg my-auto ">{currency}{order.amount}</p>
+                  <p className="font-medium text-lg my-auto ">{currency}{order.amount?.toFixed ? order.amount.toFixed(2) : order.amount}</p>
 
 
                   <div className="flex flex-col text-sm md:text-base text-black/60">
 
                       <p>Method: {order.paymentType}</p>
 
-                      <p>Date: {new Date(order.createdAt).toLocaleDateString()}</p>
+                      <p>Date: {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : "—"}</p>
 
                       <p>Payment: {order.isPaid ? "Paid" : "Pending"}</p>
 
                   </div>
 
               </div>
-
-          ))}
+            )
+          })}
 
       </div>
     </div>

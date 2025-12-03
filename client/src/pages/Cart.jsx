@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAppContext } from "../context/AppContext";
-import { assets, dummyAddress } from "../assets/assets";
+import { assets} from "../assets/assets";
 import toast from "react-hot-toast";
 
 const Cart = () => {
@@ -62,8 +62,10 @@ const Cart = () => {
                     toast.success(data.message);
                     setCartItems({});
                     navigate('/my-orders');
-                } else {
+                } else if (data.url) {
                     window.location.replace(data.url);
+                } else {
+                    toast.error("Checkout URL missing. Please try again.");
                 }
             }
             else {
@@ -87,16 +89,20 @@ const Cart = () => {
     },[user])
 
     const price = cartArray.reduce((sum, item) => sum + item.offerPrice * item.quantity, 0);
+    const cartCount = cartArray.reduce((sum, item) => sum + item.quantity, 0);
     const tax = Math.floor(price * 0.1);
     const total = price + tax;
     const formatCurrency = (value) => value.toFixed(2);
 
-    return products.length > 0 && cartItems ? (
+    if (!products.length) return <p className="mt-16">Loading products…</p>;
+    if (!cartArray.length) return <p className="mt-16">Your cart is empty.</p>;
+
+    return cartItems ? (
         <div className="flex flex-col md:flex-row mt-16">
             {/* Left: Cart items list */}
             <div className='flex-1 max-w-4xl'>
                 <h1 className="text-3xl font-medium mb-6">
-                    Shopping Cart <span className="text-sm text-primary">{getCartCount()} Items</span>
+                    Shopping Cart <span className="text-sm text-primary">{cartCount} Items</span>
                 </h1>
 
                 <div className="grid grid-cols-[2fr_1fr_1fr] text-gray-500 text-base font-medium pb-3">
@@ -111,8 +117,8 @@ const Cart = () => {
                             <div onClick={() => {
                                 navigate(`/products/${product.category.toLowerCase()}/${product._id}`);
                                 scrollTo(0,0);
-                            }} className="cursor-pointer w-24 h-24 flex items-center justify-center border border-gray-300 rounded overflow-hidden">
-                                <img className="max-w-full h-full object-cover" src={product.image[0]} alt={product.name} />
+                            }} className="aspect-square cursor-pointer w-24 h-24 flex items-center justify-center border border-gray-300 rounded overflow-hidden">
+                                <img className="w-full h-full object-cover" src={product.image[0]} alt={product.name} />
                             </div>
                             <div>
                                 <p className="hidden md:block font-semibold">{product.name}</p>
