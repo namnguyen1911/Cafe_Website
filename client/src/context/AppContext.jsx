@@ -6,7 +6,7 @@ import axios from 'axios';
 
 //Allowing sending cookies on cross-origin
 axios.defaults.withCredentials = true;
-axios.defaults.baseURL = import.meta.env.VITE_BACKEND_URL;
+axios.defaults.baseURL = import.meta.env.VITE_BACKEND_URL || '/';
 
 //Attach CSRF header from cookie (double-submit token)
 const getCsrfToken = () => {
