@@ -30,7 +30,7 @@ const Navbar = () => {
         }
     },[searchQuery])
   return (
-    <nav className="flex items-center justify-between px-6 md:px-16 lg:px-24 xl:px-32 py-4 border-b border-gray-300 bg-white relative transition-all">
+    <nav className="flex items-center justify-between px-6 md:px-16 lg:px-24 xl:px-32 py-4 border-b border-gray-300 bg-white relative transition-all z-30">
 
             {/* Logo */}
             <NavLink to='/' onClick={() => setOpen(false)} >
@@ -111,33 +111,32 @@ const Navbar = () => {
 
             {/* Mobile Menu */}
 
-            {open && (<div className={`${open ? 'flex' : 'hidden'} absolute top-[60px] left-0 w-full bg-white shadow-md py-4 flex-col items-start gap-2 px-5 text-sm md:hidden`}>
+            {open && (<div className='fixed top-0 bottom-0 left-0 right-0 z-30' onClick={() => setOpen(false)}>
+                <div onClick={(e) => e.stopPropagation()} className={`${open ? 'flex' : 'hidden'} absolute top-20 right-5 w-30 bg-white shadow-md py-4 flex-col items-start gap-2 px-5 text-sm md:hidden z-40`}>
 
-                <NavLink to='/' onClick={() => setOpen(false)}>Home</NavLink>
+                    <NavLink to='/' onClick={() => setOpen(false)}>Home</NavLink>
 
-                <NavLink to='/products' onClick={() => setOpen(false)}>All Products</NavLink>
+                    <NavLink to='/products' onClick={() => setOpen(false)}>All Products</NavLink>
 
-                { user && <NavLink to='/products' onClick={() => setOpen(false)}>My Orders</NavLink>}
+                    { user && <NavLink to='/products' onClick={() => setOpen(false)}>My Orders</NavLink>}
 
-                <NavLink to='/' onClick={() => setOpen(false)}>Contact</NavLink>
+                    <NavLink to='/' onClick={() => setOpen(false)}>Contact</NavLink>
 
-                {!user ? (
-                    //Login
-                    <button onClick={() => {setOpen(false);setShowUserLogin(true)}} className="cursor-pointer px-6 py-2 mt-2 bg-primary hover:bg-primary-dull transition text-white rounded-full text-sm">
+                    {!user ? (
+                        //Login
+                        <button onClick={() => {setOpen(false);setShowUserLogin(true)}} className="cursor-pointer px-6 py-2 mt-2 bg-primary hover:bg-primary-dull transition text-white rounded-full text-sm">
 
-                        Login
+                            Login
 
-                    </button>) : (
-                    //Logout
-                    <button onClick={logout} className="cursor-pointer px-6 py-2 mt-2 bg-primary hover:bg-primary-dull transition text-white rounded-full text-sm">
+                        </button>) : (
+                        //Logout
+                        <button onClick={logout} className="cursor-pointer px-6 py-2 mt-2 bg-primary hover:bg-primary-dull transition text-white rounded-full text-sm">
 
-                        Logout
+                            Logout
 
-                    </button>
-                )}
-                
-                
-
+                        </button>
+                    )}
+                </div>
             </div>)}
 
 

@@ -6,7 +6,7 @@ const ProductCard = ({product}) => {
     const {currency, addToCart, removeFromCart, cartItems, navigate} = useAppContext()
 
     return product && (
-        <div onClick={() => {navigate(`/products/${product.category.toLowerCase()}/${product._id}`); scrollTo(0,0)}} className="border border-gray-500/20 rounded-md md:px-4 px-3 py-2 bg-white min-w-56 max-w-56 w-full">
+        <div onClick={() => {navigate(`/products/${product.category.toLowerCase()}/${product._id}`); scrollTo(0,0)}} className="border border-gray-500/20 rounded-md md:px-4 px-3 py-2 bg-white w-full min-w-0">
             {/**Image*/}
             <div className="group cursor-pointer">
                 <div className="w-full aspect-square overflow-hidden rounded bg-white border border-gray-200 flex items-center justify-center">
