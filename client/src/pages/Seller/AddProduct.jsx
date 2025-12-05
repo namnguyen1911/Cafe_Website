@@ -1,7 +1,8 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { assets, categories } from '../../assets/assets'
 import { useAppContext } from '../../context/AppContext'
 import toast from 'react-hot-toast'
+import { useParams } from 'react-router-dom'
 
 const AddProduct = () => {
 
@@ -11,8 +12,35 @@ const AddProduct = () => {
   const [category, setCategory] = useState('')
   const [price, setPrice] = useState('')
   const [offerPrice, setOfferPrice] = useState('')
+  const [existingImages, setExistingImages] = useState([]);
 
-  const {axios} = useAppContext()
+  const {axios, navigate, fetchProducts} = useAppContext()
+  const {id} = useParams()
+  const isEdit = Boolean(id)
+
+  useEffect(() => {
+    if(!isEdit) return;
+    const load = async () => {
+        try {
+            const {data} = await axios.get(`/api/product/${id}`);
+            if(data.success) {
+                const p = data.product;
+                setName(p.name || '');
+                setDescription(Array.isArray(p.description) ? p.description.join('\n') : p.description || '');
+                setCategory(p.category || '');
+                setPrice(p.price || '');
+                setOfferPrice(p.offerPrice || '');
+                setExistingImages(p.image || []); // use a separate state for existing image previews
+            }
+            else {
+                toast.error(data.message)
+            }
+        } catch (error) {
+            toast.error(error.message)
+        };
+    }
+    load();
+  },[isEdit,id,axios])
 
   const onSubmitHandler = async (event) => {
     try {
@@ -24,7 +52,8 @@ const AddProduct = () => {
             description: description.split('\n'),
             category,
             price,
-            offerPrice
+            offerPrice,
+            retainImages: existingImages,
         }
 
         const formData = new FormData();
@@ -33,9 +62,14 @@ const AddProduct = () => {
             formData.append('images',files[index])
         }
 
-        const {data} = await axios.post('/api/product/add', formData)
+
+        const response = isEdit 
+            ? await axios.put(`/api/product/${id}`, formData, { headers: { 'Content-Type': 'multipart/form-data' }})
+            : await axios.post('/api/product/add', formData, { headers: { 'Content-Type': 'multipart/form-data' }});
+        const { data } = response;
 
         if (data.success) {
+            await fetchProducts();
             toast.success(data.message);
             setName('')
             setDescription('')
@@ -43,8 +77,8 @@ const AddProduct = () => {
             setPrice('')
             setOfferPrice('')
             setFiles([])
-        }
-        else {
+            navigate('/seller/product-list')
+        } else {
             toast.error(data.message)
         }
     } catch (error) {
@@ -73,7 +107,13 @@ const AddProduct = () => {
                                   setFiles(updatedFiles)
                                 }} accept="image/*" type="file" id={`image${index}`} hidden />
 
-                                <img className="max-w-24 cursor-pointer" src={files[index] ? URL.createObjectURL(files[index]) : assets.upload_area} alt="uploadArea" width={100} height={100} />
+                                <div className="w-24 h-24 border rounded overflow-hidden flex items-center justify-center bg-gray-50 cursor-pointer">
+                                  <img
+                                    className="w-full h-full object-cover"
+                                    src={files[index] ? URL.createObjectURL(files[index]) : (existingImages[index] || assets.upload_area)}
+                                    alt="uploadArea"
+                                  />
+                                </div>
 
                             </label>
 
@@ -140,7 +180,18 @@ const AddProduct = () => {
 
                 </div>
 
-                <button className="px-8 py-2.5 bg-primary text-white font-medium rounded cursor-pointer">ADD</button>
+                <div className="flex gap-3 w-full">
+                  <button
+                    type="button"
+                    onClick={() => navigate('/seller/product-list')}
+                    className="flex-1 py-2.5 bg-red-400 text-white font-medium rounded cursor-pointer hover:bg-red-600 text-center"
+                  >
+                    Cancel
+                  </button>
+                  <button className="flex-1 py-2.5 bg-green-500 text-white font-medium rounded cursor-pointer hover:bg-green-600 text-center">
+                    {isEdit ? "EDIT" : "ADD"}
+                  </button>
+                </div>
 
             </form>
 

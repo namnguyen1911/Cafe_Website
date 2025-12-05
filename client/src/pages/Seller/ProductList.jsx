@@ -6,12 +6,7 @@ import toast from 'react-hot-toast'
 
 
 const ProductList = () => {
-    const {products, currency, axios, fetchProducts} = useAppContext()
-
-    useEffect(() => {
-        fetchProducts()
-    },[products])
-
+    const {products, currency, axios, navigate, fetchProducts} = useAppContext()
 
     const toggleStock = async (id, inStock) => {
         try {
@@ -46,6 +41,8 @@ const ProductList = () => {
                                 <th className="px-4 py-3 font-semibold truncate hidden md:block">Selling Price</th>
 
                                 <th className="px-4 py-3 font-semibold truncate">In Stock</th>
+
+                                <th className="px-4 py-3 font-semibold truncate">Action</th>
 
                             </tr>
 
@@ -85,6 +82,13 @@ const ProductList = () => {
 
                                         </label>
 
+                                    </td>
+
+                                    <td className='px-4 py-3'>
+                                        <button 
+                                            onClick={() => navigate(`/seller/edit/${product._id}`)} 
+                                            className="text-sm px-3 py-1 border border-primary text-primary rounded hover:bg-primary hover:text-white transition-colors"
+                                            >Edit</button>
                                     </td>
 
                                 </tr>
