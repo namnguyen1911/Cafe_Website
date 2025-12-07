@@ -1,4 +1,6 @@
 Sau Luc Coffee Roastery Website - Project Report
+This website is live on: https://sauluc-coffee-roastery.vercel.app/
+Seller account: test@gmail.com - saulucocffeeroastery123
 
 1. Project Information
 - Project name: Sau Luc Coffee Roastery Website
