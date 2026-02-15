@@ -1,8 +1,10 @@
 const requireCsrf = (req, res, next) => {
-    const csrfCookie = req.cookies?.csrfToken;
     const csrfHeader = req.get('x-csrf-token');
+    const userCsrf = req.cookies?.userCsrfToken;
+    const sellerCsrf = req.cookies?.sellerCsrfToken;
 
-    if (!csrfCookie || !csrfHeader || csrfCookie !== csrfHeader) {
+    const valid = csrfHeader && (csrfHeader === userCsrf || csrfHeader === sellerCsrf);
+    if (!valid) {
         return res.status(403).json({success: false, message: "CSRF validation failed"});
     }
 

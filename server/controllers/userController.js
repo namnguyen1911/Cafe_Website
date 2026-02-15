@@ -29,7 +29,7 @@ export const register = async (req, res) => {
             sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', //CSRF protection for cross-site frontend
             maxAge: 7 * 24 * 60 * 60 * 1000, //Cookie expiration time
         })
-        res.cookie('csrfToken', csrfToken, {
+        res.cookie('userCsrfToken', csrfToken, {
             httpOnly: false,
             secure: process.env.NODE_ENV === 'production',
             sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
@@ -82,7 +82,7 @@ export const login = async (req, res) => {
             sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', //CSRF protection for cross-site frontend
             maxAge: 7 * 24 * 60 * 60 * 1000, //Cookie expiration time
         })
-        res.cookie('csrfToken', csrfToken, {
+        res.cookie('userCsrfToken', csrfToken, {
             httpOnly: false,
             secure: process.env.NODE_ENV === 'production',
             sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
@@ -101,7 +101,7 @@ export const isAuth = async (req, res) => {
     try{
         const userId = req.userId;
         //If auth cookie is present but CSRF token is missing, treat as unauthenticated
-        if (!req.cookies?.csrfToken) {
+        if (!req.cookies?.userCsrfToken) {
             return res.json({success: false, message: "Not Authorized"});
         }
         const user = await User.findById(userId).select("-password")
@@ -121,7 +121,7 @@ export const logout = async (req,res) => {
             secure: process.env.NODE_ENV === 'production',
             sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
         });
-        res.clearCookie('csrfToken', {
+        res.clearCookie('userCsrfToken', {
             httpOnly: false,
             secure: process.env.NODE_ENV === 'production',
             sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',

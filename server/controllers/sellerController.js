@@ -16,7 +16,7 @@ export const sellerLogin = async (req, res) => {
                 sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', //CSRF protection for cross-site frontend
                 maxAge: 7 * 24 * 60 * 60 * 1000, //Cookie expiration time
             });
-            res.cookie('csrfToken', csrfToken, {
+            res.cookie('sellerCsrfToken', csrfToken, {
                 httpOnly: false,
                 secure: process.env.NODE_ENV === 'production',
                 sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
@@ -50,6 +50,11 @@ export const sellerLogout = async (req,res) => {
     try {
         res.clearCookie('sellerToken', {
             httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        });
+        res.clearCookie('sellerCsrfToken', {
+            httpOnly: false,
             secure: process.env.NODE_ENV === 'production',
             sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
         });
