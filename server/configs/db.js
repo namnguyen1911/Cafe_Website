@@ -1,14 +1,21 @@
-import mongoose from "mongoose";
+import pg from "pg";
+
+const { Pool } = pg;
+
+export const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
 
 const connectDB = async () => {
-    try{
-        //it checks if nodejs is connecting to mongoDB, it will emit this message
-        mongoose.connection.on('connected', () => console.log("Databse Connected"));
-        //Nodejs is trying to connect mongoDB
-        await mongoose.connect(`${process.env.MONGODB_URI}/sauluccoffeeroastery`)
-    } catch (error) {
-        console.error(error.message)
-    }
-}
+  try {
+    const client = await pool.connect();
+    await client.query("SELECT 1");
+    client.release();
+    console.log("PostgreSQL Connected");
+  } catch (error) {
+    console.error("PostgreSQL connection error:", error.message);
+    throw error;
+  }
+};
 
 export default connectDB;

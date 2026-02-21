@@ -1,4 +1,4 @@
-import User from "../models/User.js";
+import { createUser, findUserByEmail, findUserById, updateUserCart} from "../db/usersDb.js";
 import bcrypt from "bcryptjs";
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
@@ -11,16 +11,25 @@ export const register = async (req, res) => {
             return res.json({success: false, message: "Missing Details"})
         }
 
-        const existingUser = await User.findOne({email})
+        const existingUser = await findUserByEmail(email)
 
         if(existingUser) 
             return res.json({success: false, message: "User already exists"})
 
+        const id = crypto.randomUUID();
+
         const hashedPassword = await bcrypt.hash(password,10)
 
-        const user = await User.create({name, email, password: hashedPassword, cartItems: req.body.cartItems || {}})
+        const created = await createUser({
+            id,
+            name,
+            email,
+            password: hashedPassword,
+            cartItems: req.body.cartItems || {},
+        });
 
-        const token = jwt.sign({id: user._id}, process.env.JWT_SECRET,{expiresIn: '7d'});
+
+        const token = jwt.sign({id: created.id}, process.env.JWT_SECRET,{expiresIn: '7d'});
         const csrfToken = crypto.randomUUID();
 
         res.cookie('token',token, {
@@ -36,7 +45,11 @@ export const register = async (req, res) => {
             maxAge: 7 * 24 * 60 * 60 * 1000,
         })
 
-        return res.json({success: true, user: {email: user.email, name: user.name, cartItems: user.cartItems || {}}})
+        return res.json({
+            success: true,
+            user: { email: created.email, name: created.name, cartItems: created.cart_items || {} }
+        });
+
     } catch(error) {
         console.log(error.message)
         res.json({success: false, message: error.message})
@@ -53,7 +66,7 @@ export const login = async (req, res) => {
         if(!email || !password)
             return res.json({success:false, message: "Email and password are required"});
 
-        const user = await User.findOne({email});
+        const user = await findUserByEmail(email);
         if(!user) {
             return res.json({success:false, message: "Invalid email or password"});
         }
@@ -65,15 +78,16 @@ export const login = async (req, res) => {
 
         // Merge guest cart with user's cart (guest cart overwrites matching items)
         const guestCart = req.body.cartItems || {};
-        const mergedCart = { ...(user.cartItems || {}) };
+        const mergedCart = { ...(user.cart_items || {}) };
         for (const [productId, qty] of Object.entries(guestCart)) {
             if (!qty || qty < 1) continue;
             mergedCart[productId] = qty;
         }
-        user.cartItems = mergedCart;
-        await user.save();
 
-        const token = jwt.sign({id: user._id}, process.env.JWT_SECRET,{expiresIn: '7d'});
+        await updateUserCart(user.id,mergedCart)
+        
+
+        const token = jwt.sign({id: user.id}, process.env.JWT_SECRET,{expiresIn: '7d'});
         const csrfToken = crypto.randomUUID();
 
         res.cookie('token',token, {
@@ -89,7 +103,8 @@ export const login = async (req, res) => {
             maxAge: 7 * 24 * 60 * 60 * 1000,
         })
 
-        return res.json({success: true, user: {email: user.email, name: user.name, cartItems: user.cartItems || {}}})
+        return res.json({success: true, user: { email: user.email, name: user.name, cartItems: mergedCart || {} }
+})
     } catch(error) {
         console.log(error.message)
         res.json({success: false, message: error.message})
@@ -104,8 +119,13 @@ export const isAuth = async (req, res) => {
         if (!req.cookies?.userCsrfToken) {
             return res.json({success: false, message: "Not Authorized"});
         }
-        const user = await User.findById(userId).select("-password")
-        return res.json({success: true, user})
+        const user = await findUserById(userId);
+
+        return res.json({
+            success: true,
+            user: user ? { id: user.id, email: user.email, name: user.name, cartItems: user.cart_items || {} } : null
+        });
+
     } catch (error) {
         console.log(error.message)
         res.json({success: false, message: error.message})
