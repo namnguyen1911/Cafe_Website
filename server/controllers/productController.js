@@ -1,11 +1,12 @@
 import {v2 as cloudinary} from "cloudinary"
-import Product from "../models/Product.js"
+import { findAllProducts, findProductById, createProduct, updateProductByIdDb, updateProductStock} from "../db/productsDb.js";
+import crypto from 'crypto';
 // Add Product: /api/product/add
 export const addProduct = async (req, res) => {
     try {
         let productData = JSON.parse(req.body.productData)
 
-        const images = req.files
+        const images = req.files || []
 
         let imageUrl = await Promise.all(
             images.map(async(item) => {
@@ -20,7 +21,9 @@ export const addProduct = async (req, res) => {
             })
         )
 
-        await Product.create({...productData, image: imageUrl})
+        const id = crypto.randomUUID()
+
+        await createProduct({...productData, image: imageUrl, _id: id})
 
         res.json({success:true,message:"Product Added"})
 
@@ -33,7 +36,21 @@ export const addProduct = async (req, res) => {
 //Get Product: /api/product/list
 export const productList = async (req, res) => {
     try {
-        const products = await Product.find({})
+        const rows = await findAllProducts()
+
+        const products = rows.map((row) => ({
+            _id: row.id,
+            name: row.name,
+            description: row.description,
+            price: row.price,
+            offerPrice: row.offer_price,
+            image: row.image,
+            category: row.category,
+            inStock: row.in_stock,
+            createdAt: row.created_at,
+            updatedAt: row.updated_at
+        }))
+
         res.json({success: true, products})
     } catch (error) {
         console.log(error.message);
@@ -50,10 +67,23 @@ export const productById = async (req, res) => {
             return res.json({success: false, message: "Product id is required"})
         }
 
-        const product = await Product.findById(id)
+        const row = await findProductById(id)
 
-        if(!product) {
+        if(!row) {
             return res.json({success: false, message: "Product not found"})
+        }
+
+        const product =  {
+            _id: row.id,
+            name: row.name,
+            description: row.description,
+            price: row.price,
+            offerPrice: row.offer_price,
+            image: row.image,
+            category: row.category,
+            inStock: row.in_stock,
+            createdAt: row.created_at,
+            updatedAt: row.updated_at
         }
 
         res.json({success: true, product})
@@ -71,8 +101,8 @@ export const updateProductById = async (req, res) => {
             return res.json({success: false, message: "Product id is required"})
         }
 
-        const product = await Product.findById(id)
-        if(!product) {
+        const existingProduct = await findProductById(id)
+        if(!existingProduct) {
             return res.json({success: false, message: "Product not found"})
         }
 
@@ -88,7 +118,7 @@ export const updateProductById = async (req, res) => {
 
         const images = req.files || [];
         // start with existing images; optionally retain subset if client passes retainImages
-        const retainImages = Array.isArray(productData.retainImages) ? productData.retainImages : (product.image || []);
+        const retainImages = Array.isArray(productData.retainImages) ? productData.retainImages : (existingProduct.image || []);
         let imageUrl = retainImages;
         
         if(images.length) {
@@ -109,7 +139,17 @@ export const updateProductById = async (req, res) => {
 
         delete productData.retainImages;
 
-        const updated = await Product.findByIdAndUpdate(id,{...productData, image: imageUrl}, {new: true})
+        const mergedProduct = {
+            name: productData.name ?? existingProduct.name,
+            description: productData.description ?? existingProduct.description,
+            price: productData.price ?? existingProduct.price,
+            offerPrice: productData.offerPrice ?? existingProduct.offer_price,
+            image: imageUrl,
+            category: productData.category ?? existingProduct.category,
+            inStock: productData.inStock ?? existingProduct.in_stock,
+        }
+
+        const updated = await updateProductByIdDb(id,mergedProduct)
 
         res.json({success:true,message:"Product updated", product: updated})
     } catch (error) {
@@ -124,7 +164,7 @@ export const updateProductById = async (req, res) => {
 export const changeStock = async (req, res) => {
     try {
         const {id, inStock} = req.body
-        await Product.findByIdAndUpdate(id,{inStock})
+        await updateProductStock(id,inStock)
         res.json({success: true, message: "Stock Updated"})
     } catch (error) {
         console.log(error.message);

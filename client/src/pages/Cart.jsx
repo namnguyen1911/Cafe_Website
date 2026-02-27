@@ -48,10 +48,10 @@ const Cart = () => {
 
             const payload = {
                 items: cartArray.map(item => ({
-                    product: item._id,
+                    productId: item._id,
                     quantity: item.quantity
                 })),
-                address: selectedAddress._id
+                addressId: selectedAddress.id
             };
 
             const endpoint = paymentOption === "COD" ? '/api/order/cod' : '/api/order/stripe';
@@ -167,7 +167,7 @@ const Cart = () => {
                                     <p className="p-2 text-gray-500">No addresses found</p>
                                 )}
                                 {addresses.map((address) => (
-                                    <p key={address._id} onClick={() => {setSelectedAddress(address);setShowAddress(false)}} className="text-gray-500 p-2 hover:bg-gray-100">
+                                    <p key={address.id} onClick={() => {setSelectedAddress(address);setShowAddress(false)}} className="text-gray-500 p-2 hover:bg-gray-100">
                                         {address.street}, {address.city}, {address.state}, {address.country}
                                     </p>
                                 ))} 

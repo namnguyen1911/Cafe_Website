@@ -1,40 +1,64 @@
-import Order from "../models/Order.js";
-import Product from "../models/Product.js";
 import stripe from "stripe"
 import User from "../models/User.js"
+import {findProductById} from "../db/productsDb.js"
+import crypto from "crypto";
+import {createOrderWithItemsTx} from "../db/ordersDb.js"
+import { findAddressesByUserId } from "../db/addressesDb.js";
 
 
 //Place Order COD : /api/order/cod
-export const placeOrderCOD = async(req, res) => {
-    try {
-        const {items, address} = req.body;
-        const userId = req.userId
-        
-        if(!address || items.length === 0) {
-            return res.json({sucess: false, message: "Invalid data"})
-        }
-        //Calculate Amount Using Items
-        let amount = await items.reduce(async(acc, item ) => {
-            const product = await Product.findById(item.product);
-            return (await acc) + product.offerPrice * item.quantity;
-        },0)
+export const placeOrderCOD = async (req, res) => {
+  try {
+    const { items, addressId } = req.body;
+    const userId = req.userId;
 
-        //Add Tax Charge (10%)
-        amount += Math.floor(amount * 0.1);
-
-        await Order.create({
-            userId,
-            items,
-            amount,
-            address,
-            status: "Order placed",
-            paymentType: "COD",
-        });
-        return res.json({success: true, message: "Order Placed Successfully"})
-    } catch (error) {
-        return res.json({sucess: false, message: error.message})
+    if (!userId || !addressId || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ success: false, message: "Invalid data" });
     }
-}
+
+    for (const item of items) {
+      if (typeof item?.productId !== "string" || !Number.isInteger(item.quantity) || item.quantity <= 0) {
+        return res.status(400).json({ success: false, message: "Invalid item data" });
+      }
+    }
+
+    const addresses = await findAddressesByUserId(userId);
+    const ownsAddress = addresses.some((a) => a.id === addressId);
+    if (!ownsAddress) {
+      return res.status(403).json({ success: false, message: "Invalid address" });
+    }
+
+    const amount = await items.reduce(async (accPromise, item) => {
+      const acc = await accPromise;
+      const row = await findProductById(item.productId);
+      if (!row) throw new Error(`Product not found: ${item.productId}`);
+
+      const price = Number(row.offer_price);
+      if (!Number.isFinite(price)) throw new Error(`Invalid product price: ${item.productId}`);
+
+      return acc + price * item.quantity;
+    }, Promise.resolve(0));
+
+    const totalAmount = amount + Math.floor(amount * 0.1);
+
+    await createOrderWithItemsTx({
+      orderId: crypto.randomUUID(),
+      userId,
+      addressId,
+      amount: totalAmount,
+      status: "Order placed",
+      paymentType: "COD",
+      isPaid: false,
+      items,
+    });
+
+    return res.status(200).json({ success: true, message: "Order Placed Successfully" });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+
 
 //Place Order Stripe : /api/order/stripe
 export const placeOrderStripe = async(req, res) => {
