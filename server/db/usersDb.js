@@ -40,3 +40,17 @@ export const updateUserCart = async (id, cartItems) => {
     [id, JSON.stringify(cartItems || {})]
   );
 };
+
+// server/db/usersDb.js
+export const deleteUserCart = async (userId) => {
+  const { rows } = await pool.query(
+    `UPDATE users
+     SET cart_items = '{}'::jsonb,
+         updated_at = NOW()
+     WHERE id = $1
+     RETURNING id, name, email, cart_items, updated_at`,
+    [userId]
+  );
+
+  return rows[0] || null;
+};
