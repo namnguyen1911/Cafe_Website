@@ -1,5 +1,5 @@
 import stripe from "stripe"
-import {findProductById} from "../db/productsDb.js"
+import {findProductById, findProductsByIds} from "../db/productsDb.js"
 import crypto from "crypto";
 import {createOrderWithItemsTx, findAllOrders, findOrdersByUserId, updateOrderPaid, updateOrderStatus} from "../db/ordersDb.js"
 import {deleteUserCart} from "../db/usersDb.js"
@@ -29,9 +29,12 @@ export const placeOrderCOD = async (req, res) => {
     }
 
     let subTotalCents = 0;
+    const productIds = items.map((item) => item.productId);
+    const products = await findProductsByIds(productIds);
+    const productMap = new Map(products.map((product) => [product.id,product]));
 
     for(const item of items) {
-        const product = await findProductById(item.productId);
+        const product = productMap.get(item.productId);
         if(!product) throw new Error(`Product not found: ${item.productId}`);
         
 
@@ -46,13 +49,13 @@ export const placeOrderCOD = async (req, res) => {
 
       //Add Tax Charge (10%)
       const totalTaxCents = Math.round(subTotalCents * 0.1)
-      const totalAmountcents = subTotalCents + totalTaxCents;
+      const totalAmountCents = subTotalCents + totalTaxCents;
 
     await createOrderWithItemsTx({
       orderId: crypto.randomUUID(),
       userId,
       addressId,
-      amount: totalAmountcents / 100,
+      amount: totalAmountCents / 100,
       status: "Order placed",
       paymentType: "COD",
       isPaid: false,
@@ -106,9 +109,12 @@ export const placeOrderStripe = async(req, res) => {
         
         //Calculate Amount Using Items
         let subTotalCents = 0;
+        const productIds = items.map((item) => item.productId);
+        const products = await findProductsByIds(productIds);
+        const productMap = new Map(products.map((product) => [product.id,product]));
 
         for(const item of items) {
-          const product = await findProductById(item.productId);
+          const product = productMap.get(item.productId);
           if(!product) throw new Error(`Product not found: ${item.productId}`);
           
 
@@ -130,13 +136,13 @@ export const placeOrderStripe = async(req, res) => {
 
         //Add Tax Charge (10%)
         const totalTaxCents = Math.round(subTotalCents * 0.1)
-        const totalAmountcents = subTotalCents + totalTaxCents;
+        const totalAmountCents = subTotalCents + totalTaxCents;
 
         const order = await createOrderWithItemsTx({
             orderId: crypto.randomUUID(),
             userId,
             addressId,
-            amount: totalAmountcents / 100,
+            amount: totalAmountCents / 100,
             status: "Order placed",
             paymentType: "Online",
             isPaid: false,

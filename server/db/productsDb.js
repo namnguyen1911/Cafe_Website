@@ -74,6 +74,7 @@ export const findAllProducts = async () => {
     return rows;
 }
 
+//Find one product
 export const findProductById = async (id) => {
     const {rows} = await pool.query(
         `SELECT *
@@ -83,4 +84,16 @@ export const findProductById = async (id) => {
          [id]
     );
     return rows[0] || null;
+}
+
+//Find multiple products
+export const findProductsByIds = async (ids) => {
+    const {rows} = await pool.query(
+        `SELECT *
+         FROM products
+         WHERE id = ANY($1::text[])`,
+         [ids]
+    );
+
+    return rows;
 }
