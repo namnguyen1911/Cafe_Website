@@ -33,12 +33,14 @@ export const createUser = async ({ id, name, email, password, cartItems = {} }) 
 };
 
 export const updateUserCart = async (id, cartItems) => {
-  await pool.query(
+  const {rows} = await pool.query(
     `UPDATE users
      SET cart_items = $2::jsonb, updated_at = NOW()
-     WHERE id = $1`,
+     WHERE id = $1
+     RETURNING id, cart_items, updated_at`,
     [id, JSON.stringify(cartItems || {})]
   );
+  return rows[0] || null;
 };
 
 // server/db/usersDb.js
