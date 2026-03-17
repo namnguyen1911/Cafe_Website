@@ -4,6 +4,7 @@ import crypto from "crypto";
 import {createOrderWithItemsTx, findAllOrders, findOrdersByUserId, updateOrderPaid, updateOrderStatus} from "../db/ordersDb.js"
 import {deleteUserCart} from "../db/usersDb.js"
 import { findAddressesByUserId } from "../db/addressesDb.js";
+import { createHttpError } from "../utils/http.js";
 
 
 //Place Order COD : /api/order/cod
@@ -178,15 +179,6 @@ const prepareOrderInput = async ({ userId, addressId, items }) => {
     totalAmountCents,
   };
 };
-
-//Helper to create consistent error message
-const createHttpError = (status, message) => {
-  const error = new Error(message);
-  error.status = status;
-  return error;
-};
-
-
 
 //Stripe webhooks to verify payment action: /stripe
 export const stripeWebhooks = async (req,res) => {
