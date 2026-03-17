@@ -1,5 +1,5 @@
 import stripe from "stripe"
-import {findProductById, findProductsByIds} from "../db/productsDb.js"
+import {findProductsByIds} from "../db/productsDb.js"
 import crypto from "crypto";
 import {createOrderWithItemsTx, findAllOrders, findOrdersByUserId, updateOrderPaid, updateOrderStatus} from "../db/ordersDb.js"
 import {deleteUserCart} from "../db/usersDb.js"
@@ -12,44 +12,7 @@ export const placeOrderCOD = async (req, res) => {
     const { items, addressId } = req.body;
     const userId = req.userId;
 
-    if (!userId || !addressId || !Array.isArray(items) || items.length === 0) {
-      return res.status(400).json({ success: false, message: "Invalid data" });
-    }
-
-    for (const item of items) {
-      if (typeof item?.productId !== "string" || !Number.isInteger(item.quantity) || item.quantity <= 0) {
-        return res.status(400).json({ success: false, message: "Invalid item data" });
-      }
-    }
-
-    const addresses = await findAddressesByUserId(userId);
-    const ownsAddress = addresses.some((a) => a.id === addressId);
-    if (!ownsAddress) {
-      return res.status(403).json({ success: false, message: "Invalid address" });
-    }
-
-    let subTotalCents = 0;
-    const productIds = items.map((item) => item.productId);
-    const products = await findProductsByIds(productIds);
-    const productMap = new Map(products.map((product) => [product.id,product]));
-
-    for(const item of items) {
-        const product = productMap.get(item.productId);
-        if(!product) throw new Error(`Product not found: ${item.productId}`);
-        
-
-        const unitPriceCents = Math.round(Number(product.offer_price) * 100);
-        if(!Number.isFinite(unitPriceCents)) throw new Error(`Invalid product price: ${item.productId}`);
-
-        const quantity = Number(item.quantity);
-        if(!Number.isInteger(quantity)) throw new Error(`Invalid product quantity: ${item.productId}`);
-
-        subTotalCents += unitPriceCents * quantity;
-      }
-
-      //Add Tax Charge (10%)
-      const totalTaxCents = Math.round(subTotalCents * 0.1)
-      const totalAmountCents = subTotalCents + totalTaxCents;
+    const {totalAmountCents} = await prepareOrderInput({userId, addressId, items})
 
     await createOrderWithItemsTx({
       orderId: crypto.randomUUID(),
@@ -64,7 +27,7 @@ export const placeOrderCOD = async (req, res) => {
 
     return res.status(200).json({ success: true, message: "Order Placed Successfully" });
   } catch (error) {
-    return res.status(500).json({ success: false, message: error.message });
+    return res.status(error.status || 500).json({ success: false, message: error.message });
   }
 };
 
@@ -76,67 +39,18 @@ export const placeOrderStripe = async(req, res) => {
         const {items, addressId} = req.body;
         const userId = req.userId
 
-        //Checking if it is a bad request
-        if (!userId || !addressId || !Array.isArray(items) || items.length === 0) {
-          return res.status(400).json({ success: false, message: "Invalid data" });
-        }
+        const {totalAmountCents, productData, totalTaxCents} = await prepareOrderInput({userId, addressId, items})
 
-        for (const item of items) {
-          if (typeof item?.productId !== "string" || !Number.isInteger(item.quantity) || item.quantity <= 0) {
-            return res.status(400).json({ success: false, message: "Invalid item data" });
-          }
-        }
-
-        // Checking whether addressId belongs to the user
-        const addresses = await findAddressesByUserId(userId);
-        const ownsAddress = addresses.some((a) => a.id === addressId);
-
-        if (!ownsAddress) {
-          return res.status(403).json({ success: false, message: "Invalid address" });
-        }
-
-        //Select a trusted origin instead of whatever the client sends
         const allowedOrigins = [
-            process.env.CLIENT_URL,
-            process.env.CLIENT_URL_ALT,
+          process.env.CLIENT_URL,
+          process.env.CLIENT_URL_ALT,
         ].filter(Boolean);
+
         const origin = allowedOrigins.includes(req.headers.origin) ? req.headers.origin : allowedOrigins[0];
-        if(!origin) {
-            return res.status(500).json({success: false, message: "No allowed client origin configured"})
+
+        if (!origin) {
+          throw createHttpError(500, "No allowed client origin configured");
         }
-
-        let productData = []
-        
-        //Calculate Amount Using Items
-        let subTotalCents = 0;
-        const productIds = items.map((item) => item.productId);
-        const products = await findProductsByIds(productIds);
-        const productMap = new Map(products.map((product) => [product.id,product]));
-
-        for(const item of items) {
-          const product = productMap.get(item.productId);
-          if(!product) throw new Error(`Product not found: ${item.productId}`);
-          
-
-          const unitPriceCents = Math.round(Number(product.offer_price) * 100);
-          if(!Number.isFinite(unitPriceCents)) throw new Error(`Invalid product price: ${item.productId}`);
-
-          const quantity = Number(item.quantity);
-          if(!Number.isInteger(quantity)) throw new Error(`Invalid product quantity: ${item.productId}`);
-
-          subTotalCents += unitPriceCents * quantity;
-
-          productData.push({
-            name: product.name,
-            unitPriceCents: unitPriceCents,
-            quantity: Number(item.quantity)
-          });
-
-        }
-
-        //Add Tax Charge (10%)
-        const totalTaxCents = Math.round(subTotalCents * 0.1)
-        const totalAmountCents = subTotalCents + totalTaxCents;
 
         const order = await createOrderWithItemsTx({
             orderId: crypto.randomUUID(),
@@ -198,15 +112,81 @@ export const placeOrderStripe = async(req, res) => {
 
           return res.status(500).json({success: false, message: e.message})
         }
-
-        
-
-
         
     } catch (error) {
-        return res.status(500).json({success: false, message: error.message})
+        return res.status(error.status || 500).json({
+          success: false, 
+          message: error.message
+        });
     }
 }
+
+//Helper function for placeOrderCOD and placeOrderStripe
+const prepareOrderInput = async ({ userId, addressId, items }) => {
+  if (!userId || !addressId || !Array.isArray(items) || items.length === 0) {
+    throw createHttpError(400, "Invalid data");
+  }
+
+  for (const item of items) {
+    if (typeof item?.productId !== "string" || !Number.isInteger(item.quantity) || item.quantity <= 0) {
+      throw createHttpError(400, "Invalid item data");
+    }
+  }
+
+  const addresses = await findAddressesByUserId(userId);
+  const ownsAddress = addresses.some((a) => a.id === addressId);
+  if (!ownsAddress) {
+    throw createHttpError(403, "Invalid address");
+  }
+
+  const productIds = items.map((item) => item.productId);
+  const products = await findProductsByIds(productIds);
+  const productMap = new Map(products.map((product) => [product.id, product]));
+
+  const productData = [];
+  let subTotalCents = 0;
+
+  for (const item of items) {
+    const product = productMap.get(item.productId);
+    if (!product) throw createHttpError(400, `Product not found: ${item.productId}`);
+
+    const unitPriceCents = Math.round(Number(product.offer_price) * 100);
+    if (!Number.isFinite(unitPriceCents)) {
+      throw createHttpError(500, `Invalid product price: ${item.productId}`);
+    }
+
+    const quantity = Number(item.quantity);
+    if (!Number.isInteger(quantity)) {
+      throw createHttpError(400, `Invalid product quantity: ${item.productId}`);
+    }
+
+    subTotalCents += unitPriceCents * quantity;
+
+    productData.push({
+      name: product.name,
+      unitPriceCents,
+      quantity,
+    });
+  }
+
+  const totalTaxCents = Math.round(subTotalCents * 0.1);
+  const totalAmountCents = subTotalCents + totalTaxCents;
+
+  return {
+    productData,
+    totalTaxCents,
+    totalAmountCents,
+  };
+};
+
+//Helper to create consistent error message
+const createHttpError = (status, message) => {
+  const error = new Error(message);
+  error.status = status;
+  return error;
+};
+
+
 
 //Stripe webhooks to verify payment action: /stripe
 export const stripeWebhooks = async (req,res) => {
