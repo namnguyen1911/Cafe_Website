@@ -23,25 +23,25 @@ export const sellerLogin = async (req, res) => {
                 maxAge: 7 * 24 * 60 * 60 * 1000,
             });
 
-            return res.json({success: true, message: "Logged In"})
+            return res.status(200).json({success: true, message: "Logged In"})
         }
         else {
-            return res.json({sucess: false, message: "Invalid Credentials"})
+            return res.status(401).json({success: false, message: "Invalid Credentials"})
         }
     }
     catch (error) {
         console.log(error.message);
-        res.json({sucess: false, message: error.message})
+        res.status(500).json({success: false, message: error.message})
     }
 }
 
 //Check seller Authentication: /api/seller/is-auth
 export const isSellerAuth = async (req, res) => {
     try{
-        return res.json({success: true})
+        return res.status(200).json({success: true})
     } catch (error) {
         console.log(error.message)
-        res.json({success: false, message: error.message})
+        res.status(500).json({success: false, message: error.message})
     }
 }
 
@@ -59,9 +59,9 @@ export const sellerLogout = async (req,res) => {
             sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
         });
 
-        return res.json({success: true, message: "Logged Out"})
+        return res.status(200).json({success: true, message: "Logged Out"})
     } catch (error) {
         console.log(error.message)
-        res.json({success: false, message: error.message})
+        res.status(500).json({success: false, message: error.message})
     }
 }
