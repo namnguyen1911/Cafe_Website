@@ -4,7 +4,44 @@ import crypto from 'crypto';
 // Add Product: /api/product/add
 export const addProduct = async (req, res) => {
     try {
-        let productData = JSON.parse(req.body.productData)
+
+        //Safely parse input
+        let productData = {};
+        const raw = req.body?.productData ?? req.body;
+        if (raw) {
+            try {
+                productData = typeof raw === "string" ? JSON.parse(raw) : raw;
+            } catch {
+                return res.status(400).json({ success: false, message: "Invalid product data" });
+            }
+        }
+
+        //Validate the input
+        const required = ["name", "description", "price", "offerPrice", "category", "inStock"];
+
+        for (const key of required) {
+            if (productData[key] == null || productData[key] === "") {
+                return res.status(400).json({ success: false, message: `Missing product field: ${key}` });
+            }
+        }
+
+        //Type check
+        if (!Array.isArray(productData.description) || productData.description.length === 0) {
+            return res.status(400).json({ success: false, message: "Description must be a non-empty array" });
+        }
+
+        if (typeof productData.price !== "number" || productData.price < 0) {
+            return res.status(400).json({ success: false, message: "Invalid price" });
+        }
+
+        if (typeof productData.offerPrice !== "number" || productData.offerPrice < 0) {
+            return res.status(400).json({ success: false, message: "Invalid offer price" });
+        }
+
+        if (typeof productData.inStock !== "boolean") {
+            return res.status(400).json({ success: false, message: "Invalid stock value" });
+        }
+
 
         const images = req.files || []
 
@@ -25,11 +62,11 @@ export const addProduct = async (req, res) => {
 
         await createProduct({...productData, image: imageUrl, _id: id})
 
-        res.json({success:true,message:"Product Added"})
+        res.status(201).json({success:true,message:"Product Added"})
 
     } catch (error) {
         console.log(error.message);
-        res.json({success:false, message: error.message})
+        res.status(500).json({success:false, message: error.message})
     }
 }
 
@@ -51,10 +88,10 @@ export const productList = async (req, res) => {
             updatedAt: row.updated_at
         }))
 
-        res.json({success: true, products})
+        res.status(200).json({success: true, products})
     } catch (error) {
         console.log(error.message);
-        res.json({success:false, message: error.message})
+        res.status(500).json({success:false, message: error.message})
     }
 }
 
@@ -64,13 +101,13 @@ export const productById = async (req, res) => {
         const {id} = req.params
 
         if(!id) {
-            return res.json({success: false, message: "Product id is required"})
+            return res.status(400).json({success: false, message: "Product id is required"})
         }
 
         const row = await findProductById(id)
 
         if(!row) {
-            return res.json({success: false, message: "Product not found"})
+            return res.status(404).json({success: false, message: "Product not found"})
         }
 
         const product =  {
@@ -86,10 +123,10 @@ export const productById = async (req, res) => {
             updatedAt: row.updated_at
         }
 
-        res.json({success: true, product})
+        res.status(200).json({success: true, product})
     } catch (error) {
         console.log(error.message);
-        res.json({success:false, message: error.message})
+        res.status(500).json({success:false, message: error.message})
     }
 }
 
@@ -98,12 +135,12 @@ export const updateProductById = async (req, res) => {
     try {
         const {id} = req.params
         if(!id) {
-            return res.json({success: false, message: "Product id is required"})
+            return res.status(400).json({success: false, message: "Product id is required"})
         }
 
         const existingProduct = await findProductById(id)
         if(!existingProduct) {
-            return res.json({success: false, message: "Product not found"})
+            return res.status(404).json({success: false, message: "Product not found"})
         }
 
         let productData = {};
@@ -112,9 +149,42 @@ export const updateProductById = async (req, res) => {
             try {
                 productData = typeof raw === "string" ? JSON.parse(raw) : raw;
             } catch {
-                return res.json({ success: false, message: "Invalid product data" });
+                return res.status(400).json({ success: false, message: "Invalid product data" });
             }
         }
+
+        //Type check
+        if("name" in productData) {
+            if (typeof productData.name !== "string") {
+                return res.status(400).json({ success: false, message: "name must be a string" });
+            }
+        }
+
+        if("description" in productData) {
+            if (!Array.isArray(productData.description) || productData.description.length === 0) {
+                return res.status(400).json({ success: false, message: "Description must be a non-empty array" });
+            }
+        }
+
+        if("price" in productData) {
+            if (typeof productData.price !== "number" || productData.price < 0) {
+                return res.status(400).json({ success: false, message: "Invalid price" });
+            }
+        }
+        
+        if("offerPrice" in productData) {
+            if (typeof productData.offerPrice !== "number" || productData.offerPrice < 0) {
+                return res.status(400).json({ success: false, message: "Invalid offer price" });
+            }
+        }
+
+        if("inStock" in productData) {
+            if (typeof productData.inStock !== "boolean") {
+                return res.status(400).json({ success: false, message: "Invalid stock value" });
+            }
+        }
+
+        
 
         const images = req.files || [];
         // start with existing images; optionally retain subset if client passes retainImages
@@ -151,10 +221,10 @@ export const updateProductById = async (req, res) => {
 
         const updated = await updateProductByIdDb(id,mergedProduct)
 
-        res.json({success:true,message:"Product updated", product: updated})
+        res.status(200).json({success:true,message:"Product updated", product: updated})
     } catch (error) {
         console.log(error.message);
-        res.json({success:false, message: error.message})
+        res.status(500).json({success:false, message: error.message})
     }
 }
 
@@ -164,10 +234,26 @@ export const updateProductById = async (req, res) => {
 export const changeStock = async (req, res) => {
     try {
         const {id, inStock} = req.body
-        await updateProductStock(id,inStock)
-        res.json({success: true, message: "Stock Updated"})
+
+        //Check id
+        if(!id) {
+            return res.status(400).json({success: false, message: "Product id is required"})
+        }
+
+        //Check inStock datatype
+        if(typeof inStock !== "boolean") {
+            return res.status(400).json({success: false, message: "Invalid stock value"})
+        }
+
+        const updated = await updateProductStock(id,inStock)
+
+        if (!updated) {
+            return res.status(404).json({ success: false, message: "Product not found" });
+        }
+
+        res.status(200).json({success: true, message: "Stock Updated"})
     } catch (error) {
         console.log(error.message);
-        res.json({success:false, message: error.message})
+        res.status(500).json({success:false, message: error.message})
     }
 }
