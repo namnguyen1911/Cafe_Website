@@ -45,7 +45,7 @@ export const addAddress = async (req, res) => {
       return res.status(500).json({ success: false, message: "Failed to create address" });
     }
 
-    return res.status(200).json({ success: true, message: "Address added successfully" });
+    return res.status(201).json({ success: true, message: "Address added successfully" });
   } catch (error) {
     console.log(error.message);
     return res.status(500).json({ success: false, message: error.message });
