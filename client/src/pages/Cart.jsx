@@ -5,7 +5,7 @@ import toast from "react-hot-toast";
 
 const Cart = () => {
     const [showAddress, setShowAddress] = useState(false)
-    const {products, currency, cartItems, removeFromCart, getCartCount, updateCartItem, navigate, getCartAmount, axios, user, setCartItems} = useAppContext();
+    const {products, currency, cartItems, removeFromCart, updateCartItem, navigate, axios, user, setCartItems} = useAppContext();
     const [cartArray, setCartArray] = useState([])
     const [addresses, setAddresses] = useState([])
     const [selectedAddress, setSelectedAddress] = useState(null)
@@ -88,13 +88,17 @@ const Cart = () => {
         }
     },[user])
 
-    const price = cartArray.reduce((sum, item) => sum + item.offerPrice * item.quantity, 0);
-    const cartCount = cartArray.reduce((sum, item) => sum + item.quantity, 0);
-    const tax = Math.floor(price * 0.1);
-    const total = price + tax;
+    const totalCents = cartArray.reduce((sumCents, item) => {
+        const offerPrice = Math.round(Number(item.offerPrice) * 100);
+        return sumCents + offerPrice * Number(item.quantity);
+    }, 0);
+
+    const cartCount = cartArray.reduce((sum, item) => sum + Number(item.quantity), 0);
+    const taxCents = Math.round(totalCents * 0.1);
+    
     const formatCurrency = (value) => value.toFixed(2);
 
-    if (!products.length) return <p className="mt-16">Loading products…</p>;
+    if (!products.length) return <p className="mt-16">Loading products... </p>;
     if (!cartArray.length) return <p className="mt-16">Your cart is empty.</p>;
 
     return cartItems ? (
@@ -112,7 +116,7 @@ const Cart = () => {
                 </div>
 
                 {cartArray.map((product, index) => (
-                    <div key={index} className="grid grid-cols-[2fr_1fr_1fr] text-gray-500 items-center text-sm md:text-base font-medium pt-3">
+                    <div key={product._id} className="grid grid-cols-[2fr_1fr_1fr] text-gray-500 items-center text-sm md:text-base font-medium pt-3">
                         <div className="flex items-center md:gap-6 gap-3">
                             <div onClick={() => {
                                 navigate(`/products/${product.category.toLowerCase()}/${product._id}`);
@@ -135,7 +139,7 @@ const Cart = () => {
                                 </div>
                             </div>
                         </div>
-                        <p className="text-center">{currency}{formatCurrency(product.offerPrice * product.quantity)}</p>
+                        <p className="text-center">{currency}{formatCurrency(Number(product.offerPrice) * Number(product.quantity))}</p>
                         <button onClick={() => removeFromCart(product._id)} className="cursor-pointer mx-auto">
                             <img src={assets.remove_icon} alt="remove" className="inline-block w-6 h-6"/>
                         </button>
@@ -190,16 +194,16 @@ const Cart = () => {
 
                 <div className="text-gray-500 mt-4 space-y-2">
                     <p className="flex justify-between">
-                        <span>Price</span><span>{currency}{formatCurrency(price)}</span>
+                        <span>Price</span><span>{currency}{formatCurrency(totalCents/100)}</span>
                     </p>
                     <p className="flex justify-between">
                         <span>Shipping Fee</span><span className="text-green-600">Free</span>
                     </p>
                     <p className="flex justify-between">
-                        <span>Tax (10%)</span><span>{currency}{formatCurrency(tax)}</span>
+                        <span>Tax (10%)</span><span>{currency}{formatCurrency(taxCents/100)}</span>
                     </p>
                     <p className="flex justify-between text-lg font-medium mt-3">
-                        <span>Total Amount:</span><span>{currency}{formatCurrency(total)}</span>
+                        <span>Total Amount:</span><span>{currency}{formatCurrency((totalCents + taxCents)/100)}</span>
                     </p>
                 </div>
 
