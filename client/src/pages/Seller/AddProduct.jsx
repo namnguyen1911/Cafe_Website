@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { assets, categories } from '../../assets/assets'
 import { useAppContext } from '../../context/AppContext'
 import toast from 'react-hot-toast'
@@ -13,7 +13,7 @@ const AddProduct = () => {
   const [price, setPrice] = useState('')
   const [offerPrice, setOfferPrice] = useState('')
   const [existingImages, setExistingImages] = useState([]);
-
+  const [inStock, setInStock] = useState(true);
   const {axios, navigate, fetchProducts} = useAppContext()
   const {id} = useParams()
   const isEdit = Boolean(id)
@@ -30,6 +30,7 @@ const AddProduct = () => {
                 setCategory(p.category || '');
                 setPrice(p.price || '');
                 setOfferPrice(p.offerPrice || '');
+                setInStock(Boolean(p.inStock));
                 setExistingImages(p.image || []); // use a separate state for existing image previews
             }
             else {
@@ -42,17 +43,25 @@ const AddProduct = () => {
     load();
   },[isEdit,id,axios])
 
+
   const onSubmitHandler = async (event) => {
     try {
         {/* Stop page loading */}
         event.preventDefault();
 
+        const descriptionLines = description.split('\n').map((line) => line.trim()).filter(Boolean);
+
+        if(!descriptionLines.length) {
+            return toast.error("Description is required");
+        }
+
         const productData = {
             name,
-            description: description.split('\n'),
+            description: descriptionLines,
             category,
-            price,
-            offerPrice,
+            price: Number(price),
+            offerPrice: Number(offerPrice),
+            inStock,
             retainImages: existingImages,
         }
 
@@ -64,8 +73,8 @@ const AddProduct = () => {
 
 
         const response = isEdit 
-            ? await axios.put(`/api/product/${id}`, formData, { headers: { 'Content-Type': 'multipart/form-data' }})
-            : await axios.post('/api/product/add', formData, { headers: { 'Content-Type': 'multipart/form-data' }});
+            ? await axios.put(`/api/product/${id}`, formData)
+            : await axios.post('/api/product/add', formData);
         const { data } = response;
 
         if (data.success) {
@@ -136,9 +145,16 @@ const AddProduct = () => {
 
                     <label className="text-base font-medium" htmlFor="product-description">Product Description</label>
 
-                    <textarea onChange={(e) => setDescription(e.target.value)} value={description}
-                    id="product-description" rows={4} className="outline-none md:py-2.5 py-2 px-3 rounded border border-gray-500/40 resize-none" placeholder="Type here"></textarea>
-
+                    <textarea 
+                        onChange={(e) => setDescription(e.target.value)} 
+                        value={description}
+                        id="product-description" 
+                        rows={4} 
+                        className="outline-none md:py-2.5 py-2 px-3 rounded border border-gray-500/40 resize-none" 
+                        placeholder="Type here"
+                        required
+                        ></textarea>
+                        
                 </div>
 
                 <div className="w-full flex flex-col gap-1">
@@ -179,6 +195,19 @@ const AddProduct = () => {
                     </div>
 
                 </div>
+
+                <div className="flex items-center gap-2">
+                    <input
+                        id="in-stock"
+                        type="checkbox"
+                        checked={inStock}
+                        onChange={(e) => setInStock(e.target.checked)}
+                    />
+                    <label htmlFor="in-stock" className="text-base font-medium">
+                        In Stock
+                    </label>
+                </div>
+
 
                 <div className="flex gap-3 w-full">
                   <button
