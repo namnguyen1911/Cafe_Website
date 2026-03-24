@@ -1,4 +1,3 @@
-import React, { useEffect } from 'react'
 import {useAppContext} from '../../context/AppContext'
 import toast from 'react-hot-toast'
 
@@ -14,6 +13,9 @@ const ProductList = () => {
             if(data.success) {
                 fetchProducts();
                 toast.success(data.message)
+            }
+            else {
+                toast.error(data.message)
             }
         } catch (error) {
             toast.error(error.message)
@@ -58,7 +60,14 @@ const ProductList = () => {
 
                                         <div className="w-16 aspect-square border border-gray-300 rounded overflow-hidden">
 
-                                            <img src={product.image[0]} alt="Product" className="w-full h-full" />
+                                            {product.image?.[0] ? (
+                                                <img src={product.image[0]} alt="Product" className="w-full h-full" />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">
+                                                    No image
+                                                </div>
+                                            )}
+                                            
 
                                         </div>
 
@@ -68,13 +77,13 @@ const ProductList = () => {
 
                                     <td className="px-4 py-3">{product.category}</td>
 
-                                    <td className="px-4 py-3 max-sm:hidden">{currency}{product.offerPrice}</td>
+                                    <td className="px-4 py-3 max-sm:hidden">{currency}{Number(product.offerPrice).toFixed(2)}</td>
 
                                     <td className="px-4 py-3">
 
                                         <label className="relative inline-flex items-center cursor-pointer text-gray-900 gap-3">
 
-                                            <input type="checkbox" className="sr-only peer" onClick={() => toggleStock(product._id, !product.inStock)} checked={product.inStock}/>
+                                            <input type="checkbox" className="sr-only peer" onChange={() => toggleStock(product._id, !product.inStock)} checked={product.inStock}/>
 
                                             <div className="w-12 h-7 bg-slate-300 rounded-full peer peer-checked:bg-blue-600 transition-colors duration-200"></div>
 
