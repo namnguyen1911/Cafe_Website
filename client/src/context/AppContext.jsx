@@ -1,6 +1,5 @@
-import {createContext, useContext, useEffect, useState} from 'react';
+import {createContext, useContext, useEffect, useState, useRef} from 'react';
 import {useNavigate} from "react-router-dom";
-import { dummyProducts } from '../assets/assets';
 import toast from "react-hot-toast"
 import axios from 'axios';
 
@@ -9,14 +8,37 @@ axios.defaults.withCredentials = true;
 axios.defaults.baseURL = import.meta.env.VITE_BACKEND_URL || '/';
 
 //Attach CSRF header from cookie (double-submit token)
-const getCsrfToken = () => {
+const getCsrfToken = (name) => {
     if (typeof document === 'undefined') return null;
-    const match = document.cookie.split('; ').find((row) => row.startsWith('csrfToken='));
+    const match = document.cookie.split('; ').find((row) => row.startsWith(`${name}=`));
     return match ? decodeURIComponent(match.split('=')[1]) : null;
 };
 
+const getCsrfTokenForUrl = (url = '') => {
+    if (
+        url.startsWith('/api/seller') ||
+        url.startsWith('/api/product') ||
+        url === '/api/order/seller'
+    ) {
+        return getCsrfToken('sellerCsrfToken');
+    }
+
+    if (
+        url.startsWith('/api/user') ||
+        url.startsWith('/api/cart') ||
+        url.startsWith('/api/address') ||
+        url === '/api/order/cod' ||
+        url === '/api/order/stripe'
+    ) {
+        return getCsrfToken('userCsrfToken');
+    }
+
+    return null;
+};
+
+
 axios.interceptors.request.use((config) => {
-    const csrfToken = getCsrfToken();
+    const csrfToken = getCsrfTokenForUrl(config.url || '');
     if (csrfToken) {
         config.headers['x-csrf-token'] = csrfToken;
     }
@@ -36,6 +58,7 @@ export const AppContextProvider = ({children}) => {
     const [products, setProducts] = useState([])
     const [cartItems, setCartItems] = useState({})
     const [searchQuery, setSearchQuery] = useState('')
+    const hasHydratedCart = useRef(false);
 
     //Fetch Seller Status
     const fetchSeller = async () => {
@@ -56,11 +79,17 @@ export const AppContextProvider = ({children}) => {
         try {
             const {data} = await axios.get('/api/user/is-auth');
             if(data.success) {
+                hasHydratedCart.current = false;
                 setUser(data.user)
-                setCartItems(data.user.cartItems)
+                setCartItems(data.user.cartItems || {})
+            }
+            else {
+                setUser(null);
+                setCartItems({});
             }
         } catch (error) {
-            setUser(null)
+            setUser(null);
+            setCartItems({});
         }
     }
 
@@ -84,10 +113,17 @@ export const AppContextProvider = ({children}) => {
             }
         }
 
-        if(user) {
-            updateCart()
+        if(!user) {
+            return;
         }
-    },[cartItems])
+
+        if(!hasHydratedCart.current) {
+            hasHydratedCart.current = true;
+            return;
+        }
+
+        updateCart();
+    },[cartItems, user])
     
     
     
@@ -149,14 +185,14 @@ export const AppContextProvider = ({children}) => {
 
     //Get cart total amount
     const getCartAmount = () => {
-        let totalAmount = 0;
+        let totalAmountCents = 0;
         for (const items in cartItems) {
             let itemInfo = products.find((product) => product._id === items);
             if(itemInfo && cartItems[items] > 0) {
-                totalAmount += itemInfo.offerPrice * cartItems[items]
+                totalAmountCents += Math.round(Number(itemInfo.offerPrice) * 100) * Number(cartItems[items]);
             }
         }
-        return Math.floor(totalAmount * 100) / 100;
+        return totalAmountCents / 100;
     }
 
     //object variable named "value"
