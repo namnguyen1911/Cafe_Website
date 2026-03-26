@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import {useAppContext} from '../../context/AppContext'
 import { assets } from '../../assets/assets'
 import toast from 'react-hot-toast'
@@ -36,10 +36,10 @@ const Orders = () => {
 
           {orders.map((order, index) => {
             const address = order.address || {};
-            const items = Array.isArray(order.items) ? order.items.filter((item) => item?.product) : [];
+            const items = Array.isArray(order.items) ? order.items : [];
 
             return (
-              <div key={order._id || index} className="flex flex-col md:items-center md:flex-row gap-5 justify-between p-5 max-w-4xl rounded-md border border-gray-300">
+              <div key={order.id || index} className="flex flex-col md:items-center md:flex-row gap-5 justify-between p-5 max-w-4xl rounded-md border border-gray-300">
 
                   <div className="flex gap-5 max-w-80">
 
@@ -47,13 +47,13 @@ const Orders = () => {
 
                       <div>
 
-                          {items.map((item, index) => (
+                          {items.map((item) => (
 
-                              <div key={index} className="flex flex-col">
+                              <div key={item.id} className="flex flex-col">
 
                                   <p className="font-medium">
 
-                                      {item.product?.name}{" "} <span className='text-primary'> x {item.quantity}</span>
+                                      {item?.name}{" "} <span className='text-primary'> x {item?.quantity}</span>
 
                                   </p>
 
@@ -84,7 +84,7 @@ const Orders = () => {
 
                       <p>Method: {order.paymentType}</p>
 
-                      <p>Date: {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : "—"}</p>
+                      <p>Date: {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : "-"}</p>
 
                       <p>Payment: {order.isPaid ? "Paid" : "Pending"}</p>
 

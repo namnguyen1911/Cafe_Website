@@ -95,7 +95,7 @@ export const findOrdersByUserId = async (userId) => {
   for (const r of rows) {
     if (!map.has(r.order_id)) {
       map.set(r.order_id, {
-        _id: r.order_id,
+        id: r.order_id,
         userId: r.user_id,
         addressId: r.address_id,
         amount: Number(r.amount),
@@ -109,7 +109,7 @@ export const findOrdersByUserId = async (userId) => {
     }
 
     map.get(r.order_id).items.push({
-      _id: r.product_id,
+      id: r.product_id,
       name: r.product_name,
       quantity: Number(r.item_quantity),
       price: Number(r.product_price),
@@ -123,7 +123,7 @@ export const findOrdersByUserId = async (userId) => {
 };
 
 
-export const findAllOrders = async() => {
+export const findAllOrders = async () => {
   const { rows } = await pool.query(
     `SELECT 
       o.id                  AS order_id,
@@ -135,6 +135,17 @@ export const findAllOrders = async() => {
       o.is_paid,
       o.created_at          AS order_created_at,
       o.updated_at          AS order_updated_at,
+
+      a.first_name          AS address_first_name,
+      a.last_name           AS address_last_name,
+      a.email               AS address_email,
+      a.street              AS address_street,
+      a.city                AS address_city,
+      a.state               AS address_state,
+      a.zipcode             AS address_zipcode,
+      a.country             AS address_country,
+      a.phone               AS address_phone,
+
       oi.product_id,
       oi.quantity           AS item_quantity,
       p.name                AS product_name,
@@ -142,10 +153,11 @@ export const findAllOrders = async() => {
       p.offer_price         AS product_offer_price,
       p.image               AS product_image,
       p.category            AS product_category
-     FROM orders o 
+     FROM orders o
+     JOIN addresses a ON a.id = o.address_id
      JOIN order_items oi ON oi.order_id = o.id
      JOIN products p ON p.id = oi.product_id
-     ORDER BY o.created_at DESC, oi.created_at ASC`,
+     ORDER BY o.created_at DESC, oi.created_at ASC`
   );
 
   const map = new Map();
@@ -153,7 +165,7 @@ export const findAllOrders = async() => {
   for (const r of rows) {
     if (!map.has(r.order_id)) {
       map.set(r.order_id, {
-        _id: r.order_id,
+        id: r.order_id,
         userId: r.user_id,
         addressId: r.address_id,
         amount: Number(r.amount),
@@ -162,12 +174,23 @@ export const findAllOrders = async() => {
         isPaid: r.is_paid,
         createdAt: r.order_created_at,
         updatedAt: r.order_updated_at,
+        address: {
+          firstName: r.address_first_name,
+          lastName: r.address_last_name,
+          email: r.address_email,
+          street: r.address_street,
+          city: r.address_city,
+          state: r.address_state,
+          zipcode: r.address_zipcode,
+          country: r.address_country,
+          phone: r.address_phone,
+        },
         items: [],
       });
     }
 
     map.get(r.order_id).items.push({
-      _id: r.product_id,
+      id: r.product_id,
       name: r.product_name,
       quantity: Number(r.item_quantity),
       price: Number(r.product_price),
@@ -178,7 +201,8 @@ export const findAllOrders = async() => {
   }
 
   return Array.from(map.values());
-}
+};
+
 
 
 export const updateOrderPaid = async (orderId, isPaid = true) => {
