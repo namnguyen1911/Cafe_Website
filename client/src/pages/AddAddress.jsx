@@ -56,9 +56,10 @@ const AddAddress = () => {
 
     useEffect(() => {
         if(!user) {
+            toast.error('Please log in to add an address');
             navigate('/cart')
         }
-    },[])
+    },[user, navigate])
 
   return (
     <div className='mt-6 pb-16'>
