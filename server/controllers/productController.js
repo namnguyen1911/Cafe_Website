@@ -73,20 +73,7 @@ export const addProduct = async (req, res) => {
 //Get Product: /api/product/list
 export const productList = async (req, res) => {
     try {
-        const rows = await findAllProducts()
-
-        const products = rows.map((row) => ({
-            _id: row.id,
-            name: row.name,
-            description: row.description,
-            price: row.price,
-            offerPrice: row.offer_price,
-            image: row.image,
-            category: row.category,
-            inStock: row.in_stock,
-            createdAt: row.created_at,
-            updatedAt: row.updated_at
-        }))
+        const products = await findAllProducts()
 
         res.status(200).json({success: true, products})
     } catch (error) {
@@ -104,24 +91,12 @@ export const productById = async (req, res) => {
             return res.status(400).json({success: false, message: "Product id is required"})
         }
 
-        const row = await findProductById(id)
+        const product = await findProductById(id)
 
-        if(!row) {
+        if(!product) {
             return res.status(404).json({success: false, message: "Product not found"})
         }
 
-        const product =  {
-            _id: row.id,
-            name: row.name,
-            description: row.description,
-            price: row.price,
-            offerPrice: row.offer_price,
-            image: row.image,
-            category: row.category,
-            inStock: row.in_stock,
-            createdAt: row.created_at,
-            updatedAt: row.updated_at
-        }
 
         res.status(200).json({success: true, product})
     } catch (error) {

@@ -104,7 +104,13 @@ export const login = async (req, res) => {
             maxAge: 7 * 24 * 60 * 60 * 1000,
         })
 
-        return res.status(200).json({success: true, user: { email: user.email, name: user.name, cartItems: mergedCart || {} }
+        return res.status(200).json({
+            success: true, 
+            user: { 
+                email: user.email, 
+                firstName: user.first_name, 
+                lastName: user.last_name,
+                cartItems: mergedCart || {} }
 })
     } catch(error) {
         console.log(error.message)
@@ -131,7 +137,13 @@ export const isAuth = async (req, res) => {
 
         return res.status(200).json({
             success: true,
-            user: { id: user.id, email: user.email, name: user.name, cartItems: user.cart_items || {}}
+            user: { 
+                id: user.id, 
+                email: user.email, 
+                firstName: user.first_name, 
+                lastName: user.last_name, 
+                cartItems: user.cart_items || {}
+            }
         });
 
     } catch (error) {
