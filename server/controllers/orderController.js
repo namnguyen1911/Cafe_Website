@@ -151,7 +151,7 @@ const prepareOrderInput = async ({ userId, addressId, items }) => {
     const product = productMap.get(item.productId);
     if (!product) throw createHttpError(400, `Product not found: ${item.productId}`);
 
-    const unitPriceCents = Math.round(Number(product.offer_price) * 100);
+    const unitPriceCents = Math.round(product.offerPrice * 100);
     if (!Number.isFinite(unitPriceCents)) {
       throw createHttpError(500, `Invalid product price: ${item.productId}`);
     }
