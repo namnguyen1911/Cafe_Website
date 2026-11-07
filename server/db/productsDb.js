@@ -339,7 +339,7 @@ export const findProductById = async (id) => {
 //Find multiple products
 export const findProductsByIds = async (ids) => {
     const {rows} = await pool.query(
-        `SELECT id, name, offer_price
+        `SELECT id, name, price, offer_price
          FROM products
          WHERE id = ANY($1::text[])`,
          [ids]
@@ -348,6 +348,7 @@ export const findProductsByIds = async (ids) => {
     return rows.map((row) => ({
         id: row.id,
         name: row.name,
+        price: Number(row.price),
         offerPrice: Number(row.offer_price)
     }));
 }

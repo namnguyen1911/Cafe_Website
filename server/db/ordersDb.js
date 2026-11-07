@@ -36,18 +36,21 @@ export const createOrderWithItemsTx = async ({
     const placeholders = [];
 
     items.forEach((item, i) => {
-      const base = i * 4;
-      placeholders.push(`($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4})`);
+      const base = i * 7;
+      placeholders.push(`($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5}, $${base + 6}, $${base + 7})`);
       values.push(
         crypto.randomUUID(),
         order.id,
         item.productId,
+        item.productName,
+        item.unitPrice,
+        item.unitOfferPrice,
         Number(item.quantity)
       );
     });
 
     await client.query(
-      `INSERT INTO order_items (id, order_id, product_id, quantity)
+      `INSERT INTO order_items (id, order_id, product_id, product_name, unit_price, unit_offer_price, quantity)
        VALUES ${placeholders.join(",")}
        RETURNING id`,
       values
@@ -77,9 +80,9 @@ export const findOrdersByUserId = async (userId) => {
       o.updated_at          AS order_updated_at,
       oi.product_id,
       oi.quantity           AS item_quantity,
-      p.name                AS product_name,
-      p.price               AS product_price,
-      p.offer_price         AS product_offer_price,
+      oi.product_name       AS product_name,
+      oi.unit_price         AS product_price,
+      oi.unit_offer_price   AS product_offer_price,
       p.image               AS product_image,
       p.category            AS product_category
      FROM orders o 
@@ -148,9 +151,9 @@ export const findAllOrders = async () => {
 
       oi.product_id,
       oi.quantity           AS item_quantity,
-      p.name                AS product_name,
-      p.price               AS product_price,
-      p.offer_price         AS product_offer_price,
+      oi.product_name       AS product_name,
+      oi.unit_price         AS product_price,
+      oi.unit_offer_price   AS product_offer_price,
       p.image               AS product_image,
       p.category            AS product_category
      FROM orders o

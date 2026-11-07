@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import crypto from 'crypto';
+import crypto from 'crypto'; 
 
 //Login seller: /api/seller/login
 export const sellerLogin = async (req, res) => {

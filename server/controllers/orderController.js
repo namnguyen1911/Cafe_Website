@@ -13,7 +13,7 @@ export const placeOrderCOD = async (req, res) => {
     const { items, addressId } = req.body;
     const userId = req.userId;
 
-    const {totalAmountCents} = await prepareOrderInput({userId, addressId, items})
+    const {totalAmountCents , orderItems} = await prepareOrderInput({userId, addressId, items});
 
     await createOrderWithItemsTx({
       orderId: crypto.randomUUID(),
@@ -23,7 +23,7 @@ export const placeOrderCOD = async (req, res) => {
       status: "Order placed",
       paymentType: "COD",
       isPaid: false,
-      items,
+      items: orderItems,
     });
 
     return res.status(200).json({ success: true, message: "Order Placed Successfully" });
@@ -40,7 +40,7 @@ export const placeOrderStripe = async(req, res) => {
         const {items, addressId} = req.body;
         const userId = req.userId
 
-        const {totalAmountCents, productData, totalTaxCents} = await prepareOrderInput({userId, addressId, items})
+        const {totalAmountCents, productData, totalTaxCents, orderItems} = await prepareOrderInput({userId, addressId, items});
 
         const allowedOrigins = [
           process.env.CLIENT_URL,
@@ -61,7 +61,7 @@ export const placeOrderStripe = async(req, res) => {
             status: "Order placed",
             paymentType: "Online",
             isPaid: false,
-            items,
+            items: orderItems,
         });
 
         try {
@@ -144,6 +144,7 @@ const prepareOrderInput = async ({ userId, addressId, items }) => {
   const products = await findProductsByIds(productIds);
   const productMap = new Map(products.map((product) => [product.id, product]));
 
+  const orderItems = [];
   const productData = [];
   let subTotalCents = 0;
 
@@ -163,6 +164,14 @@ const prepareOrderInput = async ({ userId, addressId, items }) => {
 
     subTotalCents += unitPriceCents * quantity;
 
+    orderItems.push({
+      productId: product.id,
+      productName: product.name,
+      unitPrice: product.price,
+      unitOfferPrice: product.offerPrice,
+      quantity,
+    })
+
     productData.push({
       name: product.name,
       unitPriceCents,
@@ -174,6 +183,7 @@ const prepareOrderInput = async ({ userId, addressId, items }) => {
   const totalAmountCents = subTotalCents + totalTaxCents;
 
   return {
+    orderItems,
     productData,
     totalTaxCents,
     totalAmountCents,

@@ -1,4 +1,4 @@
-import { createUser, findUserByEmail, findUserById, updateUserCart} from "../db/usersDb.js";
+import { createUser, findUserByEmail, findUserById, updateUserCart , findCartItemsByUserId} from "../db/usersDb.js";
 import bcrypt from "bcryptjs";
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
@@ -48,7 +48,7 @@ export const register = async (req, res) => {
 
         return res.status(201).json({
             success: true,
-            user: { email: created.email, name: created.name, cartItems: created.cart_items || {} }
+            user: { email: created.email, name: created.name, cartItems: created.cartItems || {} }
         });
 
     } catch(error) {
@@ -78,8 +78,11 @@ export const login = async (req, res) => {
             return res.status(401).json({success:false, message: "Invalid email or password"});
 
         // Merge guest cart with user's cart (guest cart overwrites matching items)
+
+        
         const guestCart = req.body.cartItems ? validateCartItems(req.body.cartItems) : {};
-        const mergedCart = { ...(user.cart_items || {}) };
+        const userCartItems = await findCartItemsByUserId(user.id);
+        const mergedCart = {...userCartItems};
         for (const [productId, qty] of Object.entries(guestCart)) {
             if (!qty || qty < 1) continue;
             mergedCart[productId] = qty;
@@ -110,7 +113,7 @@ export const login = async (req, res) => {
                 email: user.email, 
                 firstName: user.first_name, 
                 lastName: user.last_name,
-                cartItems: mergedCart || {} }
+                cartItems: mergedCart}
 })
     } catch(error) {
         console.log(error.message)
@@ -135,6 +138,8 @@ export const isAuth = async (req, res) => {
             });
         }
 
+        const userCartItems = await findCartItemsByUserId(user.id);
+
         return res.status(200).json({
             success: true,
             user: { 
@@ -142,7 +147,7 @@ export const isAuth = async (req, res) => {
                 email: user.email, 
                 firstName: user.first_name, 
                 lastName: user.last_name, 
-                cartItems: user.cart_items || {}
+                cartItems: userCartItems
             }
         });
 
